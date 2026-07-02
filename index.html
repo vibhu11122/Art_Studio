@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Minimalist art portfolio and store featuring original paintings and sketches. Inquiry and purchasing via WhatsApp.">
+    <title>The Gallery | Original Sketches & Paintings</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Header & Navigation -->
+    <header class="header">
+        <div class="logo">
+            <a href="#">ELENA RAE</a>
+        </div>
+        <nav class="nav">
+            <a href="#gallery" class="nav-link">Gallery</a>
+            <a href="#about" class="nav-link">About</a>
+            <a href="#contact" class="nav-link">Contact</a>
+        </nav>
+    </header>
+
+    <!-- Hero Section: revolving 3D gallery carousel -->
+    <section class="hero">
+        <div class="hero-spotlight" aria-hidden="true"></div>
+        <div class="hero-inner">
+            <div class="hero-content">
+                <span class="hero-eyebrow">Original Watercolors &amp; Charcoal Works</span>
+                <h1 class="hero-title">Light, Texture <em>&amp;</em> Form</h1>
+                <p class="hero-subtitle">A collection of original watercolor paintings and expressive charcoal sketches exploring quiet introspection.</p>
+                <div class="hero-actions">
+                    <a href="#gallery" class="hero-btn">Explore Collection</a>
+                    <span class="hero-scroll-hint"><i class="fa-solid fa-arrows-rotate"></i> Drag to spin the collection</span>
+                </div>
+                <div class="hero-now-viewing" aria-live="polite">
+                    <span class="now-viewing-label">Now Viewing</span>
+                    <span class="now-viewing-title" id="now-viewing-title">&mdash;</span>
+                    <span class="now-viewing-medium" id="now-viewing-medium"></span>
+                </div>
+            </div>
+
+            <div class="carousel-viewport" id="carousel-viewport" tabindex="0" role="region" aria-roledescription="carousel" aria-label="Rotating showcase of featured artworks. Use the left and right arrow keys to rotate.">
+                <div class="carousel-glow" id="carousel-glow-a" aria-hidden="true"></div>
+                <div class="carousel-glow" id="carousel-glow-b" aria-hidden="true"></div>
+                <div class="carousel-ground" aria-hidden="true"></div>
+                <div class="carousel-ring" id="carousel-ring">
+                    <div class="carousel-loader" id="carousel-loader">
+                        <div class="loader"></div>
+                        <p>Hanging the collection...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <div class="mouse"></div>
+            <span>Scroll</span>
+        </div>
+    </section>
+
+    <!-- Marquee Ticker -->
+    <div class="marquee" aria-hidden="true">
+        <div class="marquee-track">
+            <span>Original Works</span><span class="dot">&bull;</span>
+            <span>Watercolor</span><span class="dot">&bull;</span>
+            <span>Charcoal &amp; Graphite</span><span class="dot">&bull;</span>
+            <span>Archival Paper</span><span class="dot">&bull;</span>
+            <span>Handcrafted</span><span class="dot">&bull;</span>
+            <span>Worldwide Shipping</span><span class="dot">&bull;</span>
+            <span>Original Works</span><span class="dot">&bull;</span>
+            <span>Watercolor</span><span class="dot">&bull;</span>
+            <span>Charcoal &amp; Graphite</span><span class="dot">&bull;</span>
+            <span>Archival Paper</span><span class="dot">&bull;</span>
+            <span>Handcrafted</span><span class="dot">&bull;</span>
+            <span>Worldwide Shipping</span><span class="dot">&bull;</span>
+        </div>
+    </div>
+
+    <!-- Main Gallery Section -->
+    <section id="gallery" class="gallery-section">
+        <div class="section-header" data-reveal>
+            <h2 class="section-title">The Collection</h2>
+            <div class="filter-controls">
+                <button class="filter-btn active" data-filter="all">All Artworks</button>
+                <button class="filter-btn" data-filter="Paintings">Paintings</button>
+                <button class="filter-btn" data-filter="Sketches">Sketches</button>
+            </div>
+        </div>
+
+        <!-- Artwork Grid -->
+        <div id="artwork-grid" class="artwork-grid">
+            <!-- Dynamically populated by app.js -->
+            <div class="loader-container">
+                <div class="loader"></div>
+                <p>Curating gallery...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about-section">
+        <div class="about-container">
+            <div class="about-image-wrapper" data-reveal>
+                <!-- Fallback to a placeholder or decorative silhouette -->
+                <div class="about-image-placeholder">
+                    <i class="fa-solid fa-feather-pointed"></i>
+                </div>
+            </div>
+            <div class="about-text-wrapper" data-reveal style="--reveal-delay: 0.15s;">
+                <span class="sub-label">About the Artist</span>
+                <h2 class="about-heading">Capturing the unseen details of everyday moments.</h2>
+                <p>Hello, I'm Elena. I am a visual artist based in the pacific northwest, working primarily with watercolor, textured acrylics, and raw charcoal. My work is inspired by the quiet dialogues between light and landscape, and the emotional resonance of empty spaces.</p>
+                <p>Every piece is handcrafted with archival-grade materials, designed to bring a sense of calm and tactile depth into your space. For sales, inquiries, or custom commission work, feel free to reach out via WhatsApp.</p>
+                <div class="social-links">
+                    <a href="#" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" target="_blank" aria-label="Pinterest"><i class="fa-brands fa-pinterest"></i></a>
+                    <a href="#" id="about-whatsapp" class="whatsapp-icon-link" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact & Purchase Info Section -->
+    <section id="contact" class="contact-section">
+        <div class="contact-card">
+            <h2 class="contact-title" data-reveal>Acquisition &amp; Inquiries</h2>
+            <p class="contact-description" data-reveal style="--reveal-delay: 0.1s;">Interested in adding a piece to your collection? Purchasing is handled directly via WhatsApp for a personalized, secure, and transparent experience. We ship worldwide in heavy-duty museum packaging.</p>
+            
+            <div class="steps-grid">
+                <div class="step-card" data-reveal style="--reveal-delay: 0.05s;">
+                    <div class="step-num">01</div>
+                    <h3 class="step-title">Select Artwork</h3>
+                    <p class="step-text">Browse the collection and click on your preferred painting or sketch to view dimensions and pricing.</p>
+                </div>
+                <div class="step-card" data-reveal style="--reveal-delay: 0.18s;">
+                    <div class="step-num">02</div>
+                    <h3 class="step-title">Tap Purchase</h3>
+                    <p class="step-text">Click the WhatsApp purchase button to initiate a chat with a pre-filled inquiry message containing the piece details.</p>
+                </div>
+                <div class="step-card" data-reveal style="--reveal-delay: 0.3s;">
+                    <div class="step-num">03</div>
+                    <h3 class="step-title">Finalize Details</h3>
+                    <p class="step-text">We will confirm shipping costs, provide tracking, and coordinate secure payment options (Bank transfer, PayPal, etc.).</p>
+                </div>
+            </div>
+            
+            <a href="https://wa.me/919876543210?text=Hi%20Elena%2C%20I%20am%20interested%20in%20discussing%20your%20available%20artworks." target="_blank" class="general-inquiry-btn">
+                <i class="fa-brands fa-whatsapp"></i> General WhatsApp Inquiry
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 Elena Rae Studio. All rights reserved.</p>
+        <p class="footer-sub">Designed for minimalists, curated for collectors.</p>
+    </footer>
+
+    <!-- Artwork Detail Modal -->
+    <div id="artwork-modal" class="modal-overlay">
+        <div class="modal-container">
+            <button class="modal-close-btn" aria-label="Close modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="modal-content">
+                <div class="modal-image-panel">
+                    <img id="modal-art-image" src="" alt="Artwork detail view">
+                </div>
+                <div class="modal-info-panel">
+                    <span id="modal-art-medium" class="art-medium"></span>
+                    <h3 id="modal-art-title" class="art-title"></h3>
+                    <div id="modal-art-status" class="status-badge"></div>
+                    
+                    <div class="art-specs">
+                        <div class="spec-item">
+                            <span class="spec-label">Dimensions</span>
+                            <span id="modal-art-dimensions" class="spec-value"></span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Price</span>
+                            <span id="modal-art-price" class="spec-value"></span>
+                        </div>
+                    </div>
+                    
+                    <p id="modal-art-description" class="art-description"></p>
+                    
+                    <a id="modal-whatsapp-btn" href="#" target="_blank" class="whatsapp-btn">
+                        <i class="fa-brands fa-whatsapp"></i> Purchase via WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

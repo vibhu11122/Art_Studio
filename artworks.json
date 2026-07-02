@@ -1,0 +1,35 @@
+[
+  {
+    "id": "1",
+    "title": "Serene Mist",
+    "category": "Paintings",
+    "price": "280",
+    "dimensions": "12\" x 16\"",
+    "medium": "Watercolor on Archival Paper",
+    "description": "A minimalist exploration of light and shadow in nature, using subtle washes of green and charcoal to evoke the quiet peace of a foggy woodland morning.",
+    "imageUrl": "assets/serene_landscape.png",
+    "status": "Available"
+  },
+  {
+    "id": "2",
+    "title": "Contours of Silence",
+    "category": "Sketches",
+    "price": "190",
+    "dimensions": "9\" x 12\"",
+    "medium": "Charcoal and Graphite on Paper",
+    "description": "An expressive study of human emotion and form, using bold, textured charcoal strokes balanced with delicate graphite shading to capture a quiet moment of introspection.",
+    "imageUrl": "assets/charcoal_sketch.png",
+    "status": "Available"
+  },
+  {
+    "id": "3",
+    "title": "Earth & Ether",
+    "category": "Paintings",
+    "price": "450",
+    "dimensions": "20\" x 20\"",
+    "medium": "Textured Acrylic on Wood Panel",
+    "description": "A heavy-bodied abstract piece built with terracotta, sand, and charcoal pigment. It explores the tactile contrast between organic earth materials and clean modern compositions.",
+    "imageUrl": "assets/abstract_canvas.png",
+    "status": "Available"
+  }
+]

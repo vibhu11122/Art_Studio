@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Admin Dashboard for managing Elena Rae Studio Art Gallery collection.">
+    <title>Studio Inventory | Admin Dashboard</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS (Reusing base tokens + admin styles) -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="admin-body">
+
+    <!-- Login Security Overlay -->
+    <div id="login-overlay" class="admin-login-overlay">
+        <div class="admin-login-card">
+            <h1 class="admin-login-title">Studio Console</h1>
+            <p class="admin-login-subtitle">Enter PIN to access inventory</p>
+            
+            <form id="login-form">
+                <div class="admin-form-group">
+                    <label for="security-pin">Security PIN</label>
+                    <input type="password" id="security-pin" class="admin-input-field" placeholder="••••" required autofocus maxlength="8">
+                </div>
+                <button type="submit" class="admin-login-btn">Unlock Console</button>
+                <p id="login-error" class="admin-login-error">Invalid security PIN. Please try again.</p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard UI (Hidden until authenticated) -->
+    <div id="dashboard-content" style="display: none;">
+        
+        <!-- Header -->
+        <header class="header scrolled">
+            <div class="logo">
+                <a href="index.html">ELENA RAE <span style="font-family: var(--font-sans); font-size: 0.7rem; font-weight: 500; opacity: 0.5; vertical-align: middle; margin-left: 0.5rem; letter-spacing: 0.1em; border: 1px solid var(--border-strong); padding: 0.2rem 0.5rem; text-transform: uppercase;">Console</span></a>
+            </div>
+            <nav class="nav">
+                <a href="index.html" class="nav-link"><i class="fa-solid fa-arrow-left"></i> Public Gallery</a>
+                <a href="#" id="logout-btn" class="nav-link"><i class="fa-solid fa-lock"></i> Lock Console</a>
+            </nav>
+        </header>
+
+        <!-- Container -->
+        <main class="admin-container">
+            
+            <!-- Alert/Notification Banner -->
+            <div id="alert-banner" class="alert-banner"></div>
+            
+            <!-- Action / Controls Bar -->
+            <div class="admin-action-bar">
+                <div>
+                    <h2 class="admin-page-title">Gallery Inventory</h2>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.3rem;">Manage your active sketches and paintings on display.</p>
+                </div>
+                <div class="admin-controls">
+                    <button id="add-artwork-btn" class="btn-admin btn-admin-solid">
+                        <i class="fa-solid fa-plus"></i> Add New Artwork
+                    </button>
+                </div>
+            </div>
+
+            <!-- Inventory Grid/Table -->
+            <div class="inventory-list">
+                <div class="inventory-header-row">
+                    <span>Thumb</span>
+                    <span>Title</span>
+                    <span class="inventory-category-cell">Category</span>
+                    <span>Price</span>
+                    <span class="inventory-dimensions-cell">Dimensions</span>
+                    <span class="inventory-medium-cell">Medium</span>
+                    <span style="text-align: right; padding-right: 1rem;">Action</span>
+                </div>
+                <div id="inventory-rows">
+                    <!-- Loaded dynamically via admin.js -->
+                    <div class="loader-container">
+                        <div class="loader"></div>
+                        <p>Loading database catalog...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Edit/Add side panel overlay -->
+    <div id="drawer-overlay" class="admin-panel-overlay">
+        <div class="admin-panel-drawer">
+            <div class="drawer-header">
+                <h3 id="drawer-title" class="drawer-title">Edit Artwork</h3>
+                <button id="drawer-close-btn" class="drawer-close-btn" aria-label="Close panel">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <form id="artwork-form">
+                <!-- Hidden fields -->
+                <input type="hidden" id="art-id">
+                
+                <div class="admin-form-group">
+                    <label for="art-title">Artwork Title</label>
+                    <input type="text" id="art-title" class="admin-input-field" placeholder="e.g. Whispers of the Coast" required>
+                </div>
+                
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label for="art-category">Category</label>
+                        <select id="art-category" class="admin-select-field">
+                            <option value="Paintings">Paintings</option>
+                            <option value="Sketches">Sketches</option>
+                        </select>
+                    </div>
+                    <div class="admin-form-group">
+                        <label for="art-status">Availability Status</label>
+                        <select id="art-status" class="admin-select-field">
+                            <option value="Available">Available</option>
+                            <option value="Sold">Sold</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label for="art-price">Price (USD)</label>
+                        <input type="text" id="art-price" class="admin-input-field" placeholder="e.g. 250" required>
+                    </div>
+                    <div class="admin-form-group">
+                        <label for="art-dimensions">Dimensions</label>
+                        <input type="text" id="art-dimensions" class="admin-input-field" placeholder='e.g. 12" x 16"' required>
+                    </div>
+                </div>
+                
+                <div class="admin-form-group">
+                    <label for="art-medium">Medium details</label>
+                    <input type="text" id="art-medium" class="admin-input-field" placeholder="e.g. Watercolor and Graphite on Paper" required>
+                </div>
+                
+                <div class="admin-form-group">
+                    <label for="art-image-url">Image URL</label>
+                    <input type="text" id="art-image-url" class="admin-input-field" placeholder="e.g. https://i.postimg.cc/image-key.png" required>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.3rem; display: block;">Upload your images to postimages.org or imgur.com and paste the direct link here.</span>
+                </div>
+                
+                <div class="admin-form-group">
+                    <label for="art-description">Artistic Description</label>
+                    <textarea id="art-description" class="admin-textarea-field" placeholder="Describe the mood, inspiration, colors, or textures of the piece..." required></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" id="drawer-cancel-btn" class="btn-admin btn-admin-hollow">Cancel</button>
+                    <button type="submit" id="drawer-submit-btn" class="btn-admin btn-admin-solid">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script src="config.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
