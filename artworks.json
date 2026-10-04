@@ -1,35 +1,74 @@
 [
   {
-    "id": "1",
+    "id": "S1",
     "title": "Serene Mist",
     "category": "Paintings",
-    "price": "280",
-    "dimensions": "12\" x 16\"",
-    "medium": "Watercolor on Archival Paper",
-    "description": "A minimalist exploration of light and shadow in nature, using subtle washes of green and charcoal to evoke the quiet peace of a foggy woodland morning.",
-    "imageUrl": "assets/serene_landscape.png",
-    "status": "Available"
+    "price": "18000",
+    "dimensions": "12\" × 16\"",
+    "medium": "Watercolour on archival paper",
+    "description": "Layered washes of sage and slate dissolve into morning fog — a quiet study of distance, light and stillness.",
+    "imageUrl": "assets/serene-mist.svg",
+    "status": "Available",
+    "sample": true
   },
   {
-    "id": "2",
+    "id": "S2",
     "title": "Contours of Silence",
     "category": "Sketches",
-    "price": "190",
-    "dimensions": "9\" x 12\"",
-    "medium": "Charcoal and Graphite on Paper",
-    "description": "An expressive study of human emotion and form, using bold, textured charcoal strokes balanced with delicate graphite shading to capture a quiet moment of introspection.",
-    "imageUrl": "assets/charcoal_sketch.png",
-    "status": "Available"
+    "price": "12000",
+    "dimensions": "9\" × 12\"",
+    "medium": "Willow charcoal on paper",
+    "description": "Bold, re-stated contours and smudged mass — a gestural figure study about the weight of a pause.",
+    "imageUrl": "assets/contours-of-silence.svg",
+    "status": "Available",
+    "sample": true
   },
   {
-    "id": "3",
+    "id": "S3",
     "title": "Earth & Ether",
     "category": "Paintings",
-    "price": "450",
-    "dimensions": "20\" x 20\"",
-    "medium": "Textured Acrylic on Wood Panel",
-    "description": "A heavy-bodied abstract piece built with terracotta, sand, and charcoal pigment. It explores the tactile contrast between organic earth materials and clean modern compositions.",
-    "imageUrl": "assets/abstract_canvas.png",
-    "status": "Available"
+    "price": "32000",
+    "dimensions": "20\" × 20\"",
+    "medium": "Textured acrylic on wood panel",
+    "description": "Terracotta, sand and charcoal pigment built up in heavy impasto — earth below, a dark sun suspended above.",
+    "imageUrl": "assets/earth-and-ether.svg",
+    "status": "Sold",
+    "sample": true
+  },
+  {
+    "id": "S4",
+    "title": "Still Life in Graphite",
+    "category": "Sketches",
+    "price": "9500",
+    "dimensions": "11\" × 14\"",
+    "medium": "Graphite (2H–8B) on cartridge paper",
+    "description": "A classical still life of vessel, cube and sphere, built with cross-hatching to model light falling across form.",
+    "imageUrl": "assets/still-life-graphite.svg",
+    "status": "Available",
+    "sample": true
+  },
+  {
+    "id": "S5",
+    "title": "Monsoon Coast",
+    "category": "Paintings",
+    "price": "24000",
+    "dimensions": "16\" × 12\"",
+    "medium": "Ink and wash on paper",
+    "description": "Slanting rain over a dark headland — the heavy, silver light of the first monsoon evening on the coast.",
+    "imageUrl": "assets/monsoon-coast.svg",
+    "status": "Available",
+    "sample": true
+  },
+  {
+    "id": "S6",
+    "title": "Fern Study",
+    "category": "Sketches",
+    "price": "7500",
+    "dimensions": "9\" × 12\"",
+    "medium": "Fineliner on paper",
+    "description": "Three unfurling fronds drawn from life — patient, repetitive line work tracing the geometry of a fern.",
+    "imageUrl": "assets/fern-study.svg",
+    "status": "Available",
+    "sample": true
   }
 ]

@@ -1,8 +1,22 @@
-# Studio Art Gallery Website & Admin Console
+# Vishal Trivedi Studio — Online Gallery & Shop
 
-A highly aesthetic, minimalist, art-gallery-inspired portfolio website built for artists to showcase and sell sketches and paintings. It uses a **Google Sheet as a database CMS** and integrates directly with **WhatsApp** for instant, frictionless purchases.
+A museum-style gallery for showcasing and selling original sketches and paintings. Visitors pass through an opening curtain, walk a **scroll-driven corridor** where each work hangs in its own frame under a spotlight with a gallery plaque, browse a **catalogue**, and step into a **viewing room** with a magnifying loupe. Purchases happen over **WhatsApp**, and the collection is managed from a **Google Sheet** (plus the optional admin console).
 
-It also features a secure **Admin Dashboard (`admin.html`)** where you can add new pieces, edit existing ones, and change prices directly from the web!
+## File Structure
+- `index.html` — the public gallery (entrance, corridor, catalogue, artist, acquire, viewing room).
+- `gallery.css` — styles for the public gallery.
+- `app.js` — gallery logic: loads the collection, hangs the corridor, catalogue, viewing room.
+- `config.js` — **all settings**: sheet URL, WhatsApp number, currency, your name and links.
+- `artworks.json` — sample collection shown until your Google Sheet has rows (a "Preview" ribbon appears while samples are on display).
+- `assets/` — the sample artworks (SVG). Replace with your own images.
+- `admin.html`, `admin.js`, `styles.css` — the admin console (unchanged).
+
+## Adding your real artworks
+1. Upload photos of your work somewhere public (e.g. this repo's `assets/` folder, or Google Drive/Cloudinary with a direct image link).
+2. Add one row per work to your Google Sheet: `id, title, category (Paintings or Sketches), status (Available or Sold), price (a number, e.g. 18000), dimensions, medium, imageUrl, description`.
+3. That's it — once the sheet has rows, the gallery shows them and the sample works and preview ribbon disappear.
+
+Tip: photograph works in soft daylight, straight on, and crop to the paper edge — the site adds the frame and mat for you.
 
 ---
 

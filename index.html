@@ -2,207 +2,224 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Minimalist art portfolio and store featuring original paintings and sketches. Inquiry and purchasing via WhatsApp.">
-    <title>The Gallery | Original Sketches & Paintings</title>
-    
-    <!-- Google Fonts -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Original sketches and paintings by Vishal Trivedi. Walk through the gallery and acquire works directly via WhatsApp.">
+    <title>Vishal Trivedi Studio | Original Sketches &amp; Paintings</title>
+    <meta name="theme-color" content="#14110f">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
-    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&amp;family=Inter:wght@300;400;500;600&amp;display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="gallery.css">
 </head>
-<body>
+<body class="is-loading">
 
-    <!-- Header & Navigation -->
-    <header class="header">
-        <div class="logo">
-            <a href="#">ELENA RAE</a>
+    <!-- Opening curtain -->
+    <div class="curtain" aria-hidden="true">
+        <div class="curtain-panel left"></div>
+        <div class="curtain-panel right"></div>
+        <div class="curtain-mark">
+            <span class="curtain-monogram" data-bind="monogram">VT</span>
+            <span class="curtain-line"></span>
+            <span class="curtain-text">The gallery is opening</span>
         </div>
-        <nav class="nav">
-            <a href="#gallery" class="nav-link">Gallery</a>
-            <a href="#about" class="nav-link">About</a>
-            <a href="#contact" class="nav-link">Contact</a>
+    </div>
+
+    <!-- Custom cursor (desktop only) -->
+    <div class="cursor" aria-hidden="true"><span class="cursor-label">View</span></div>
+
+    <!-- Shown only while sample artworks are on display -->
+    <div class="preview-ribbon" id="previewRibbon" hidden>Preview — sample works shown until the collection is added</div>
+
+    <header class="site-header" id="siteHeader">
+        <a href="#entrance" class="brand">
+            <span class="brand-name" data-bind="artistName">Vishal Trivedi</span>
+            <span class="brand-sub">Studio</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary">
+            <a href="#corridor">The Corridor</a>
+            <a href="#catalogue">Catalogue</a>
+            <a href="#artist">The Artist</a>
+            <a href="#acquire">Acquire</a>
         </nav>
+        <a href="#" class="header-cta" data-whatsapp="general"><i class="fa-brands fa-whatsapp"></i><span>Enquire</span></a>
     </header>
 
-    <!-- Hero Section: revolving 3D gallery carousel -->
-    <section class="hero">
-        <div class="hero-spotlight" aria-hidden="true"></div>
-        <div class="hero-inner">
-            <div class="hero-content">
-                <span class="hero-eyebrow">Original Watercolors &amp; Charcoal Works</span>
-                <h1 class="hero-title">Light, Texture <em>&amp;</em> Form</h1>
-                <p class="hero-subtitle">A collection of original watercolor paintings and expressive charcoal sketches exploring quiet introspection.</p>
-                <div class="hero-actions">
-                    <a href="#gallery" class="hero-btn">Explore Collection</a>
-                    <span class="hero-scroll-hint"><i class="fa-solid fa-arrows-rotate"></i> Drag to spin the collection</span>
+    <main>
+        <!-- Entrance hall -->
+        <section class="entrance" id="entrance">
+            <div class="entrance-light" aria-hidden="true"></div>
+            <div class="entrance-copy">
+                <p class="eyebrow"><span class="eyebrow-line"></span><span data-bind="tagline">Original sketches &amp; paintings</span></p>
+                <h1 class="entrance-title">
+                    <span class="line"><span data-bind="firstName">Vishal</span></span>
+                    <span class="line"><em data-bind="lastName">Trivedi</em></span>
+                </h1>
+                <p class="entrance-sub">A private gallery of graphite, charcoal and paint — every piece an original, hung for you to walk through.</p>
+                <div class="entrance-actions">
+                    <a href="#corridor" class="btn-gold">Enter the gallery</a>
+                    <a href="#catalogue" class="btn-line">Browse catalogue</a>
                 </div>
-                <div class="hero-now-viewing" aria-live="polite">
-                    <span class="now-viewing-label">Now Viewing</span>
-                    <span class="now-viewing-title" id="now-viewing-title">&mdash;</span>
-                    <span class="now-viewing-medium" id="now-viewing-medium"></span>
-                </div>
+                <dl class="entrance-facts">
+                    <div><dt>Works on view</dt><dd id="factCount">—</dd></div>
+                    <div><dt>Available</dt><dd id="factAvailable">—</dd></div>
+                    <div><dt>Mediums</dt><dd>Graphite · Charcoal · Paint</dd></div>
+                </dl>
             </div>
 
-            <div class="carousel-viewport" id="carousel-viewport" tabindex="0" role="region" aria-roledescription="carousel" aria-label="Rotating showcase of featured artworks. Use the left and right arrow keys to rotate.">
-                <div class="carousel-glow" id="carousel-glow-a" aria-hidden="true"></div>
-                <div class="carousel-glow" id="carousel-glow-b" aria-hidden="true"></div>
-                <div class="carousel-ground" aria-hidden="true"></div>
-                <div class="carousel-ring" id="carousel-ring">
-                    <div class="carousel-loader" id="carousel-loader">
-                        <div class="loader"></div>
-                        <p>Hanging the collection...</p>
+            <figure class="entrance-piece" id="featured">
+                <div class="spot-cone" aria-hidden="true"></div>
+                <div class="frame gilt"><div class="mat"><img id="featuredImg" alt=""></div></div>
+                <figcaption class="mini-plaque">
+                    <span class="mini-plaque-label">Now showing</span>
+                    <span class="mini-plaque-title" id="featuredTitle">—</span>
+                </figcaption>
+            </figure>
+
+            <a href="#corridor" class="scroll-cue" aria-label="Scroll to the gallery">
+                <span>Scroll to walk through</span>
+                <span class="scroll-cue-line"></span>
+            </a>
+        </section>
+
+        <!-- The Grand Corridor: vertical scroll walks you sideways past the wall -->
+        <section class="corridor" id="corridor" aria-label="The Grand Corridor">
+            <div class="corridor-sticky">
+                <div class="corridor-hud">
+                    <div class="room-title">
+                        <span class="room-num">Room I</span>
+                        <span class="room-name">The Grand Corridor</span>
+                    </div>
+                    <div class="room-filter" role="tablist" aria-label="Filter works">
+                        <button class="active" data-filter="all" role="tab" aria-selected="true">All works</button>
+                        <button data-filter="Paintings" role="tab" aria-selected="false">Paintings</button>
+                        <button data-filter="Sketches" role="tab" aria-selected="false">Sketches</button>
+                    </div>
+                    <div class="room-counter"><span id="corridorIndex">01</span> / <span id="corridorTotal">—</span></div>
+                </div>
+
+                <div class="wall">
+                    <div class="track" id="track">
+                        <div class="exhibit intro-panel">
+                            <p class="eyebrow"><span class="eyebrow-line"></span>Room I</p>
+                            <h2>Walk the<br><em>corridor.</em></h2>
+                            <p>Keep scrolling to move along the wall. Select any work to step into its viewing room.</p>
+                            <span class="intro-arrow" aria-hidden="true">→</span>
+                        </div>
+                        <!-- Exhibits are hung here by app.js -->
+                        <div class="exhibit outro-panel">
+                            <p class="eyebrow"><span class="eyebrow-line"></span>End of Room I</p>
+                            <h2>Something<br><em>caught your eye?</em></h2>
+                            <div class="outro-actions">
+                                <a href="#catalogue" class="btn-line">See the full catalogue</a>
+                                <a href="#" class="btn-gold" data-whatsapp="general">Ask about a piece</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <div class="floor" aria-hidden="true"></div>
+                <div class="corridor-progress" aria-hidden="true"><span id="corridorBar"></span></div>
             </div>
-        </div>
-        <div class="scroll-indicator">
-            <div class="mouse"></div>
-            <span>Scroll</span>
-        </div>
-    </section>
+        </section>
 
-    <!-- Marquee Ticker -->
-    <div class="marquee" aria-hidden="true">
-        <div class="marquee-track">
-            <span>Original Works</span><span class="dot">&bull;</span>
-            <span>Watercolor</span><span class="dot">&bull;</span>
-            <span>Charcoal &amp; Graphite</span><span class="dot">&bull;</span>
-            <span>Archival Paper</span><span class="dot">&bull;</span>
-            <span>Handcrafted</span><span class="dot">&bull;</span>
-            <span>Worldwide Shipping</span><span class="dot">&bull;</span>
-            <span>Original Works</span><span class="dot">&bull;</span>
-            <span>Watercolor</span><span class="dot">&bull;</span>
-            <span>Charcoal &amp; Graphite</span><span class="dot">&bull;</span>
-            <span>Archival Paper</span><span class="dot">&bull;</span>
-            <span>Handcrafted</span><span class="dot">&bull;</span>
-            <span>Worldwide Shipping</span><span class="dot">&bull;</span>
-        </div>
-    </div>
-
-    <!-- Main Gallery Section -->
-    <section id="gallery" class="gallery-section">
-        <div class="section-header" data-reveal>
-            <h2 class="section-title">The Collection</h2>
-            <div class="filter-controls">
-                <button class="filter-btn active" data-filter="all">All Artworks</button>
-                <button class="filter-btn" data-filter="Paintings">Paintings</button>
-                <button class="filter-btn" data-filter="Sketches">Sketches</button>
+        <!-- Catalogue -->
+        <section class="catalogue" id="catalogue">
+            <div class="section-head reveal">
+                <p class="eyebrow"><span class="eyebrow-line"></span>Catalogue raisonné</p>
+                <h2>Every work, <em>at a glance.</em></h2>
             </div>
-        </div>
-
-        <!-- Artwork Grid -->
-        <div id="artwork-grid" class="artwork-grid">
-            <!-- Dynamically populated by app.js -->
-            <div class="loader-container">
-                <div class="loader"></div>
-                <p>Curating gallery...</p>
+            <div class="catalogue-table" role="table" aria-label="Catalogue of works">
+                <div class="cat-row cat-head" role="row">
+                    <span role="columnheader">No.</span>
+                    <span role="columnheader">Title</span>
+                    <span role="columnheader" class="hide-sm">Medium</span>
+                    <span role="columnheader" class="hide-sm">Size</span>
+                    <span role="columnheader">Price</span>
+                </div>
+                <div id="catalogueRows"></div>
             </div>
-        </div>
-    </section>
+            <div class="cat-preview" id="catPreview" aria-hidden="true"><img alt=""></div>
+        </section>
 
-    <!-- About Section -->
-    <section id="about" class="about-section">
-        <div class="about-container">
-            <div class="about-image-wrapper" data-reveal>
-                <!-- Fallback to a placeholder or decorative silhouette -->
-                <div class="about-image-placeholder">
-                    <i class="fa-solid fa-feather-pointed"></i>
+        <!-- The Artist -->
+        <section class="artist" id="artist">
+            <div class="artist-portrait reveal">
+                <div class="frame noir tall"><div class="mat"><div class="monogram-art"><span data-bind="monogram">VT</span><small>graphite · charcoal · paint</small></div></div></div>
+            </div>
+            <div class="artist-copy reveal">
+                <p class="eyebrow"><span class="eyebrow-line"></span>The Artist</p>
+                <h2>Patience, <em>layered</em> in graphite.</h2>
+                <p>I'm <strong data-bind="artistName">Vishal Trivedi</strong> — an artist working mostly in graphite and charcoal, with paint when a subject asks for colour. I'm drawn to texture: the grain of paper, the weight of a shadow, the slow build of tone that turns a few lines into something that feels alive.</p>
+                <p>Alongside my studies at IIM Bangalore and IIT Madras, drawing is where I slow down. What began as commissions for friends and neighbours has grown into this collection — every piece an original, made by hand.</p>
+                <div class="artist-links">
+                    <a href="#" data-whatsapp="commission" class="btn-gold">Commission a piece</a>
+                    <a href="#" id="portfolioLink" class="btn-line" target="_blank" rel="noopener">Full portfolio ↗</a>
+                    <a href="#" id="instagramLink" class="icon-link" target="_blank" rel="noopener" aria-label="Instagram" hidden><i class="fa-brands fa-instagram"></i></a>
                 </div>
             </div>
-            <div class="about-text-wrapper" data-reveal style="--reveal-delay: 0.15s;">
-                <span class="sub-label">About the Artist</span>
-                <h2 class="about-heading">Capturing the unseen details of everyday moments.</h2>
-                <p>Hello, I'm Elena. I am a visual artist based in the pacific northwest, working primarily with watercolor, textured acrylics, and raw charcoal. My work is inspired by the quiet dialogues between light and landscape, and the emotional resonance of empty spaces.</p>
-                <p>Every piece is handcrafted with archival-grade materials, designed to bring a sense of calm and tactile depth into your space. For sales, inquiries, or custom commission work, feel free to reach out via WhatsApp.</p>
-                <div class="social-links">
-                    <a href="#" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="#" target="_blank" aria-label="Pinterest"><i class="fa-brands fa-pinterest"></i></a>
-                    <a href="#" id="about-whatsapp" class="whatsapp-icon-link" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
-                </div>
-            </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Contact & Purchase Info Section -->
-    <section id="contact" class="contact-section">
-        <div class="contact-card">
-            <h2 class="contact-title" data-reveal>Acquisition &amp; Inquiries</h2>
-            <p class="contact-description" data-reveal style="--reveal-delay: 0.1s;">Interested in adding a piece to your collection? Purchasing is handled directly via WhatsApp for a personalized, secure, and transparent experience. We ship worldwide in heavy-duty museum packaging.</p>
-            
-            <div class="steps-grid">
-                <div class="step-card" data-reveal style="--reveal-delay: 0.05s;">
-                    <div class="step-num">01</div>
-                    <h3 class="step-title">Select Artwork</h3>
-                    <p class="step-text">Browse the collection and click on your preferred painting or sketch to view dimensions and pricing.</p>
-                </div>
-                <div class="step-card" data-reveal style="--reveal-delay: 0.18s;">
-                    <div class="step-num">02</div>
-                    <h3 class="step-title">Tap Purchase</h3>
-                    <p class="step-text">Click the WhatsApp purchase button to initiate a chat with a pre-filled inquiry message containing the piece details.</p>
-                </div>
-                <div class="step-card" data-reveal style="--reveal-delay: 0.3s;">
-                    <div class="step-num">03</div>
-                    <h3 class="step-title">Finalize Details</h3>
-                    <p class="step-text">We will confirm shipping costs, provide tracking, and coordinate secure payment options (Bank transfer, PayPal, etc.).</p>
-                </div>
+        <!-- Acquire -->
+        <section class="acquire" id="acquire">
+            <div class="section-head center reveal">
+                <p class="eyebrow"><span class="eyebrow-line"></span>Acquisition<span class="eyebrow-line"></span></p>
+                <h2>Bring a piece <em>home.</em></h2>
+                <p class="section-sub">Every purchase is handled personally over WhatsApp — no checkout forms, just a conversation.</p>
             </div>
-            
-            <a href="https://wa.me/919876543210?text=Hi%20Elena%2C%20I%20am%20interested%20in%20discussing%20your%20available%20artworks." target="_blank" class="general-inquiry-btn">
-                <i class="fa-brands fa-whatsapp"></i> General WhatsApp Inquiry
-            </a>
-        </div>
-    </section>
+            <ol class="steps">
+                <li class="step reveal"><span class="step-num">I</span><h3>Choose</h3><p>Walk the corridor or browse the catalogue, then open a work to see its size, medium and price.</p></li>
+                <li class="step reveal"><span class="step-num">II</span><h3>Enquire</h3><p>Tap <em>Acquire via WhatsApp</em> — a message with the work's details is written for you.</p></li>
+                <li class="step reveal"><span class="step-num">III</span><h3>Receive</h3><p>We confirm payment and delivery, and your piece is packed with care and sent to you.</p></li>
+            </ol>
+            <div class="acquire-cta reveal">
+                <a href="#" class="btn-gold big" data-whatsapp="general"><i class="fa-brands fa-whatsapp"></i> Start a conversation</a>
+                <a href="#" class="btn-line" data-whatsapp="commission">Request a commission</a>
+            </div>
+        </section>
+    </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <p>&copy; 2026 Elena Rae Studio. All rights reserved.</p>
-        <p class="footer-sub">Designed for minimalists, curated for collectors.</p>
+    <footer class="site-footer">
+        <span class="footer-brand" data-bind="studioName">Vishal Trivedi Studio</span>
+        <span>&copy; <span id="year">2026</span> · All works are originals by the artist.</span>
+        <a href="admin.html" class="footer-admin">Studio login</a>
     </footer>
 
-    <!-- Artwork Detail Modal -->
-    <div id="artwork-modal" class="modal-overlay">
-        <div class="modal-container">
-            <button class="modal-close-btn" aria-label="Close modal">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            <div class="modal-content">
-                <div class="modal-image-panel">
-                    <img id="modal-art-image" src="" alt="Artwork detail view">
-                </div>
-                <div class="modal-info-panel">
-                    <span id="modal-art-medium" class="art-medium"></span>
-                    <h3 id="modal-art-title" class="art-title"></h3>
-                    <div id="modal-art-status" class="status-badge"></div>
-                    
-                    <div class="art-specs">
-                        <div class="spec-item">
-                            <span class="spec-label">Dimensions</span>
-                            <span id="modal-art-dimensions" class="spec-value"></span>
-                        </div>
-                        <div class="spec-item">
-                            <span class="spec-label">Price</span>
-                            <span id="modal-art-price" class="spec-value"></span>
-                        </div>
-                    </div>
-                    
-                    <p id="modal-art-description" class="art-description"></p>
-                    
-                    <a id="modal-whatsapp-btn" href="#" target="_blank" class="whatsapp-btn">
-                        <i class="fa-brands fa-whatsapp"></i> Purchase via WhatsApp
-                    </a>
-                </div>
+    <!-- Viewing room -->
+    <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-labelledby="viewerTitle" hidden>
+        <div class="viewer-backdrop" data-close></div>
+        <button class="viewer-close" data-close aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+        <button class="viewer-nav prev" id="viewerPrev" aria-label="Previous work"><i class="fa-solid fa-arrow-left"></i></button>
+        <button class="viewer-nav next" id="viewerNext" aria-label="Next work"><i class="fa-solid fa-arrow-right"></i></button>
+
+        <div class="viewer-stage">
+            <div class="viewer-art">
+                <div class="spot-cone" aria-hidden="true"></div>
+                <div class="frame" id="viewerFrame"><div class="mat"><img id="viewerImg" alt=""></div></div>
+                <div class="loupe" id="loupe" aria-hidden="true"></div>
+                <p class="viewer-hint"><i class="fa-solid fa-magnifying-glass"></i> Hover to inspect the detail</p>
             </div>
+            <aside class="viewer-plaque">
+                <p class="eyebrow"><span class="eyebrow-line"></span><span id="viewerCategory"></span></p>
+                <h2 id="viewerTitle"></h2>
+                <p class="viewer-artist" data-bind="artistName">Vishal Trivedi</p>
+                <dl class="viewer-specs">
+                    <div><dt>Medium</dt><dd id="viewerMedium"></dd></div>
+                    <div><dt>Dimensions</dt><dd id="viewerSize"></dd></div>
+                    <div><dt>Status</dt><dd id="viewerStatus"></dd></div>
+                </dl>
+                <p class="viewer-desc" id="viewerDesc"></p>
+                <div class="viewer-price-row">
+                    <span class="viewer-price" id="viewerPrice"></span>
+                    <span class="viewer-note">Original work</span>
+                </div>
+                <a href="#" class="btn-gold big" id="viewerBuy" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Acquire via WhatsApp</a>
+                <p class="viewer-count"><span id="viewerIndex"></span></p>
+            </aside>
         </div>
     </div>
 
-    <!-- Application Script -->
     <script src="config.js"></script>
     <script src="app.js"></script>
 </body>

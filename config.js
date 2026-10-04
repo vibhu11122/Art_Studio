@@ -18,11 +18,20 @@ const CONFIG = {
     adminPin: '1511',
     
     // 4. WhatsApp Phone Number (with country code, no + or spaces, e.g., "919876543210")
+    // ⚠ Check this: an Indian mobile number needs 10 digits after the 91 — this one has 9.
     whatsappNumber: '91959923810',
     
     // 5. Fallback local database path
     fallbackDatabasePath: 'artworks.json',
     
-    // 6. Currency Symbol
-    currencySymbol: '$'
+    // 6. Currency Symbol (₹ for India; prices in the sheet are plain numbers, e.g. 18000)
+    currencySymbol: '₹',
+
+    // 7. Studio identity — shown across the public gallery
+    artistName: 'Vishal Trivedi',
+    studioName: 'Vishal Trivedi Studio',
+    tagline: 'Original sketches & paintings',
+    location: 'India',
+    instagramUrl: '',            // e.g. 'https://instagram.com/yourhandle' (hidden when empty)
+    portfolioUrl: 'https://vishal-trivedi.vercel.app'
 };
