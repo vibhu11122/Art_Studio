@@ -1,749 +1,526 @@
 /**
- * Studio Gallery - Main Application Script
+ * Vishal Trivedi Studio — public gallery
+ * Loads the collection (Google Sheet → artworks.json fallback), hangs it in a
+ * scroll-driven corridor, builds the catalogue, and runs the viewing room.
  */
+(function () {
+    'use strict';
 
-// Configuration is loaded globally from config.js
-// If config.js is missing, this script will run with fallback default values.
-if (typeof CONFIG === 'undefined') {
-    window.CONFIG = {
+    const CFG = Object.assign({
         spreadsheetUrl: '',
-        appsScriptUrl: '',
-        adminPin: '1234',
-        whatsappNumber: '919876543210',
+        whatsappNumber: '',
         fallbackDatabasePath: 'artworks.json',
-        currencySymbol: '$'
-    };
-}
+        currencySymbol: '₹',
+        artistName: 'The Artist',
+        studioName: 'Studio',
+        tagline: 'Original sketches & paintings',
+        instagramUrl: '',
+        portfolioUrl: ''
+    }, typeof CONFIG !== 'undefined' ? CONFIG : {});   // config.js declares a top-level const
 
-// Application State
-let artworksData = [];
-let activeFilter = 'all';
+    const $ = (sel, root = document) => root.querySelector(sel);
+    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const finePointer = window.matchMedia('(pointer: fine)').matches;
 
-// DOM Elements
-const artworkGrid = document.getElementById('artwork-grid');
-const filterButtons = document.querySelectorAll('.filter-btn');
-const modal = document.getElementById('artwork-modal');
-const modalCloseBtn = document.querySelector('.modal-close-btn');
-const header = document.querySelector('.header');
+    let collection = [];   // everything loaded
+    let shown = [];        // after the room filter
+    let usingSamples = false;
 
-// Elements inside Modal
-const modalImg = document.getElementById('modal-art-image');
-const modalMedium = document.getElementById('modal-art-medium');
-const modalTitle = document.getElementById('modal-art-title');
-const modalStatus = document.getElementById('modal-art-status');
-const modalDimensions = document.getElementById('modal-art-dimensions');
-const modalPrice = document.getElementById('modal-art-price');
-const modalDescription = document.getElementById('modal-art-description');
-const modalWhatsappBtn = document.getElementById('modal-whatsapp-btn');
+    /* ------------------------------------------------------------------
+       Helpers
+       ------------------------------------------------------------------ */
+    function el(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined && text !== null) node.textContent = text;
+        return node;
+    }
 
-// Hero Carousel Elements
-const carouselViewport = document.getElementById('carousel-viewport');
-const carouselRing = document.getElementById('carousel-ring');
-const carouselGlowA = document.getElementById('carousel-glow-a');
-const carouselGlowB = document.getElementById('carousel-glow-b');
-const nowViewingTitle = document.getElementById('now-viewing-title');
-const nowViewingMedium = document.getElementById('now-viewing-medium');
-
-/* ==========================================================================
-   Shared Utilities
-   ========================================================================== */
-
-function reducedMotionPreferred() {
-    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-function isCoarsePointer() {
-    return window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-}
-
-function debounce(fn, wait) {
-    let timeoutId;
-    return function debounced(...args) {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => fn.apply(this, args), wait);
-    };
-}
-
-// Generates a soft branded placeholder (as a data URI) for artworks whose
-// image fails to load, so a broken-image icon never appears on the site.
-function buildImageFallback(title) {
-    const initial = (title || 'A').trim().charAt(0).toUpperCase() || 'A';
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500" viewBox="0 0 400 500">
-        <rect width="400" height="500" fill="#F1EEE8"/>
-        <rect x="1" y="1" width="398" height="498" fill="none" stroke="#DCD0C4" stroke-width="1"/>
-        <text x="200" y="272" font-family="Georgia, serif" font-size="120" fill="#C3B5A7" text-anchor="middle" opacity="0.55">${initial}</text>
-    </svg>`;
-    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
-}
-
-function attachImageFallback(imgEl, title) {
-    imgEl.addEventListener('error', () => {
-        imgEl.src = buildImageFallback(title);
-    }, { once: true });
-}
-
-/* ==========================================================================
-   Initialization & Data Loading
-   ========================================================================== */
-
-document.addEventListener('DOMContentLoaded', () => {
-    initApp();
-});
-
-async function initApp() {
-    setupHeaderScroll();
-    setupFilters();
-    setupModalEvents();
-    setupAboutWhatsApp();
-    setupScrollReveal();
-    setupNavScrollSpy();
-    setupMagneticButtons();
-    setupHeroSpotlight();
-    
-    // Load Artworks
-    await loadArtworks();
-}
-
-// Adjust Header styling on Scroll
-function setupHeaderScroll() {
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) {
-            header.classList.add('scrolled');
-        } else {
-            header.classList.remove('scrolled');
+    function formatPrice(price) {
+        const raw = String(price || '').replace(/[,\s]/g, '');
+        if (raw && !isNaN(raw)) {
+            const locale = CFG.currencySymbol === '₹' ? 'en-IN' : undefined;
+            return CFG.currencySymbol + Number(raw).toLocaleString(locale);
         }
-    });
-}
-
-// Setup About section general inquiry button
-function setupAboutWhatsApp() {
-    const aboutWa = document.getElementById('about-whatsapp');
-    if (aboutWa) {
-        const text = encodeURIComponent("Hi! I'm visiting your website and would love to chat about your sketches and paintings.");
-        aboutWa.href = `https://wa.me/${CONFIG.whatsappNumber}?text=${text}`;
+        return price || 'Price on request';
     }
-}
 
-// Fetch and load data
-async function loadArtworks() {
-    try {
-        if (CONFIG.spreadsheetUrl) {
-            console.log("Attempting to fetch data from Google Sheets...");
-            const response = await fetch(CONFIG.spreadsheetUrl);
-            if (!response.ok) throw new Error("Google Sheets fetch failed");
-            const csvText = await response.text();
-            artworksData = parseCsv(csvText);
-            console.log("Successfully loaded data from Google Sheets:", artworksData);
-        } else {
-            throw new Error("No spreadsheet URL configured. Using local database.");
-        }
-    } catch (error) {
-        console.warn(error.message);
-        console.log("Loading fallback local data...");
-        try {
-            const response = await fetch(CONFIG.fallbackDatabasePath);
-            if (!response.ok) throw new Error("Fallback fetch failed");
-            artworksData = await response.json();
-            console.log("Successfully loaded fallback data:", artworksData);
-        } catch (fallbackError) {
-            console.error("Critical: Could not load local fallback data.", fallbackError);
-            showErrorMessage();
-            initHeroCarousel([]);
-            return;
-        }
+    const isSold = art => String(art.status || '').trim().toLowerCase() === 'sold';
+    const isSketch = art => String(art.category || '').toLowerCase().startsWith('sketch');
+    const pad2 = n => String(n).padStart(2, '0');
+
+    function frameStyle(art, i) {
+        if (isSketch(art)) return 'noir';
+        return i % 2 === 0 ? 'gilt' : 'oak';
     }
-    
-    renderGallery();
-    initHeroCarousel(artworksData);
-}
 
-/* ==========================================================================
-   CSV Parser Engine (For Google Sheets integration)
-   ========================================================================== */
-
-function parseCsv(csvText) {
-    const artworks = [];
-    // Split lines by newline, avoiding empty lines
-    const rawLines = csvText.split(/\r?\n/).filter(line => line.trim().length > 0);
-    if (rawLines.length === 0) return [];
-    
-    // Helper to split a CSV line into fields, handling quotes
-    function splitCsvLine(line) {
-        const fields = [];
-        let field = '';
-        let inQuotes = false;
-        
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            
-            if (char === '"' && line[i+1] === '"') {
-                field += '"';
-                i++; // Skip the next quote
-            } else if (char === '"') {
-                inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-                fields.push(field.trim());
-                field = '';
-            } else {
-                field += char;
-            }
-        }
-        fields.push(field.trim());
-        return fields;
+    function waLink(text) {
+        return `https://wa.me/${CFG.whatsappNumber}?text=${encodeURIComponent(text)}`;
     }
-    
-    // Parse Headers
-    const headers = splitCsvLine(rawLines[0]).map(h => h.trim().toLowerCase());
-    
-    // Parse Rows
-    for (let i = 1; i < rawLines.length; i++) {
-        const fields = splitCsvLine(rawLines[i]);
-        if (fields.length < headers.length) continue;
-        
-        const row = {};
-        headers.forEach((header, index) => {
-            row[header.trim()] = fields[index] || '';
-        });
-        
-        // Helper to match column headers tolerantly (ignoring case, spaces, and minor typos)
-        const getVal = (rowObj, possibleKeys) => {
-            for (let key in rowObj) {
-                const normKey = key.toLowerCase().trim();
-                if (possibleKeys.includes(normKey)) {
-                    return rowObj[key];
-                }
-            }
-            return null;
-        };
-        
-        // Normalize keys and structure
-        artworks.push({
-            id: getVal(row, ['id']) || i.toString(),
-            title: getVal(row, ['title']) || 'Untitled Artwork',
-            category: getVal(row, ['category']) || 'Paintings',
-            price: getVal(row, ['price']) || 'Inquire',
-            dimensions: getVal(row, ['dimensions', 'dimensions ', 'dimension']) || 'Dimensions on request',
-            medium: getVal(row, ['medium', 'meduim']) || 'Original painting',
-            description: getVal(row, ['description', 'desc']) || 'No description provided.',
-            imageUrl: getVal(row, ['imageurl', 'image url', 'image']) || 'assets/placeholder.jpg',
-            status: getVal(row, ['status']) || 'Available'
-        });
+
+    function buyMessage(art) {
+        return `Hello ${CFG.artistName.split(' ')[0]}! I'd love to acquire "${art.title}" (${art.medium}, ${art.dimensions}) listed at ${formatPrice(art.price)}. Is it still available?`;
     }
-    
-    return artworks;
-}
 
-/* ==========================================================================
-   Gallery Rendering & Filter Logic
-   ========================================================================== */
-
-function renderGallery() {
-    artworkGrid.innerHTML = '';
-    
-    if (artworksData.length === 0) {
-        artworkGrid.innerHTML = '<div class="loader-container"><p>No artworks found in database.</p></div>';
-        return;
+    function fallbackImage(title) {
+        const initial = (title || 'A').trim().charAt(0).toUpperCase();
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500"><rect width="400" height="500" fill="#ece5d6"/><text x="200" y="290" font-family="Georgia,serif" font-style="italic" font-size="140" fill="#b9ab92" text-anchor="middle">${initial}</text></svg>`;
+        return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
     }
-    
-    artworksData.forEach((art, index) => {
-        const card = document.createElement('div');
-        card.className = 'artwork-card';
-        card.dataset.category = art.category;
-        
-        // Add dynamic stagger animation delay
-        card.style.animationDelay = `${index * 0.1}s`;
-        
-        const isAvailable = art.status.toLowerCase() === 'available';
-        const statusClass = isAvailable ? 'available' : 'sold';
-        const statusText = isAvailable ? 'Available' : 'Sold';
-        
-        // Format price
-        let displayPrice = art.price;
-        if (!isNaN(art.price) && art.price.trim() !== '') {
-            displayPrice = `${CONFIG.currencySymbol}${parseFloat(art.price).toLocaleString()}`;
-        }
-        
-        card.innerHTML = `
-            <div class="image-frame">
-                <img src="${art.imageUrl}" alt="${art.title}" loading="lazy">
-                <div class="card-overlay"></div>
-                <div class="status-indicator ${statusClass}">${statusText}</div>
-                <div class="view-label"><span>View Details</span><i class="fa-solid fa-arrow-up-right"></i></div>
-            </div>
-            <div class="art-info">
-                <span class="art-category">${art.category}</span>
-                <div class="art-title-row">
-                    <h3 class="art-title-name">${art.title}</h3>
-                    <span class="art-price-tag">${displayPrice}</span>
-                </div>
-                <p class="art-medium-details">${art.medium}</p>
-            </div>
-        `;
-        
-        // Fall back to a branded placeholder if the image URL is broken
-        attachImageFallback(card.querySelector('img'), art.title);
-        
-        // Subtle cursor-following tilt on the frame, like tipping a canvas toward the light
-        const frame = card.querySelector('.image-frame');
-        if (!isCoarsePointer() && !reducedMotionPreferred()) {
-            frame.addEventListener('mousemove', (e) => {
-                const rect = frame.getBoundingClientRect();
-                const px = (e.clientX - rect.left) / rect.width - 0.5;
-                const py = (e.clientY - rect.top) / rect.height - 0.5;
-                frame.style.transition = 'transform 0.1s ease-out';
-                frame.style.transform = `rotateX(${(-py * 7).toFixed(2)}deg) rotateY(${(px * 7).toFixed(2)}deg)`;
-            });
-            frame.addEventListener('mouseleave', () => {
-                frame.style.transition = 'transform 0.5s var(--ease-cinematic)';
-                frame.style.transform = '';
-            });
-        }
-        
-        // Click to view modal details
-        card.addEventListener('click', () => openModal(art));
-        
-        artworkGrid.appendChild(card);
-    });
-    
-    filterGallery(activeFilter);
-}
 
-function setupFilters() {
-    filterButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            filterButtons.forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            activeFilter = e.target.dataset.filter;
-            filterGallery(activeFilter);
-        });
-    });
-}
-
-function filterGallery(category) {
-    const cards = document.querySelectorAll('.artwork-card');
-    cards.forEach(card => {
-        const cardCategory = card.dataset.category;
-        if (category === 'all' || cardCategory.toLowerCase() === category.toLowerCase()) {
-            card.classList.remove('hidden');
-        } else {
-            card.classList.add('hidden');
-        }
-    });
-}
-
-function showErrorMessage() {
-    artworkGrid.innerHTML = `
-        <div class="loader-container">
-            <i class="fa-solid fa-triangle-exclamation" style="font-size: 2rem; color: var(--accent-bronze);"></i>
-            <p>Unable to load art collection. Please try again later.</p>
-        </div>
-    `;
-}
-
-/* ==========================================================================
-   Details Modal & WhatsApp Integration
-   ========================================================================== */
-
-function openModal(art) {
-    modalImg.onerror = () => { modalImg.src = buildImageFallback(art.title); };
-    modalImg.src = art.imageUrl;
-    modalImg.alt = art.title;
-    modalTitle.textContent = art.title;
-    modalMedium.textContent = art.medium;
-    modalDimensions.textContent = art.dimensions;
-    modalDescription.textContent = art.description;
-    
-    // Status Badge
-    const isAvailable = art.status.toLowerCase() === 'available';
-    modalStatus.textContent = isAvailable ? 'Available' : 'Sold';
-    modalStatus.className = `status-badge ${isAvailable ? 'available' : 'sold'}`;
-    
-    // Format Price for Modal
-    let displayPrice = art.price;
-    if (!isNaN(art.price) && art.price.trim() !== '') {
-        displayPrice = `${CONFIG.currencySymbol}${parseFloat(art.price).toLocaleString()}`;
-    }
-    modalPrice.textContent = displayPrice;
-    
-    // WhatsApp Buy Button Logic
-    if (isAvailable) {
-        modalWhatsappBtn.classList.remove('disabled');
-        modalWhatsappBtn.innerHTML = '<i class="fa-brands fa-whatsapp"></i> Purchase via WhatsApp';
-        
-        // Construct the custom message
-        const messageText = `Hello Elena! I am interested in purchasing your original artwork "${art.title}" (${art.medium}, ${art.dimensions}) listed for ${displayPrice}. Is it still available?`;
-        modalWhatsappBtn.href = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(messageText)}`;
-    } else {
-        modalWhatsappBtn.classList.add('disabled');
-        modalWhatsappBtn.innerHTML = 'Sold / Collection Only';
-        modalWhatsappBtn.href = '#';
-    }
-    
-    // Display Modal
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden'; // Stop background scrolling
-}
-
-function closeModal() {
-    modal.classList.remove('active');
-    document.body.style.overflow = ''; // Restore background scrolling
-    
-    // Clear image src so it doesn't flash when opened next time
-    setTimeout(() => {
-        modalImg.src = '';
-    }, 400);
-}
-
-function setupModalEvents() {
-    modalCloseBtn.addEventListener('click', closeModal);
-    
-    // Close modal when clicking outside content
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeModal();
-        }
-    });
-    
-    // Close modal with ESC key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.classList.contains('active')) {
-            closeModal();
-        }
-    });
-}
-
-/* ==========================================================================
-   Hero Carousel — Revolving Gallery
-   A ring of artworks suspended in 3D space, auto-rotating like a rotunda,
-   draggable, keyboard-navigable, and tied to the real inventory data.
-   ========================================================================== */
-
-let carouselItems = [];
-let carouselAngle = 0;
-let carouselSegment = 60;
-let carouselRadius = 220;
-let carouselPaused = false;
-let carouselDragging = false;
-let carouselDidDrag = false;
-let carouselLastFrameTime = null;
-let carouselActiveIndex = -1;
-let carouselGlowToggle = false;
-let carouselRafId = null;
-const CAROUSEL_DEGREES_PER_SECOND = 6;
-
-function initHeroCarousel(data) {
-    if (!carouselViewport || !carouselRing) return;
-    
-    // Build a working set of items; always keep the ring populated
-    let source = (data || []).filter(a => a && a.imageUrl);
-    if (source.length === 0) source = data || [];
-    
-    // Sample evenly if there are many pieces, so the ring stays legible
-    if (source.length > 8) {
-        const step = source.length / 8;
-        const sampled = [];
-        for (let i = 0; i < 8; i++) sampled.push(source[Math.floor(i * step)]);
-        source = sampled;
-    }
-    // Duplicate small collections so the ring never looks sparse
-    while (source.length > 0 && source.length < 3) {
-        source = source.concat(source);
-    }
-    
-    carouselRing.innerHTML = '';
-    carouselItems = source;
-    carouselActiveIndex = -1;
-    
-    if (source.length === 0) {
-        carouselRing.innerHTML = '<div class="carousel-empty">New pieces are being framed.<br>Check back soon.</div>';
-        return;
-    }
-    
-    const n = source.length;
-    carouselSegment = 360 / n;
-    
-    source.forEach((art, i) => {
-        const item = document.createElement('div');
-        item.className = 'ring-item';
-        item.dataset.index = String(i);
-        
-        const inner = document.createElement('div');
-        inner.className = 'ring-item-inner';
-        inner.style.transitionDelay = `${i * 0.08}s`;
-        
-        const frame = document.createElement('div');
-        frame.className = 'canvas-frame';
-        
-        const img = document.createElement('img');
-        img.alt = art.title || 'Original artwork';
-        img.loading = 'eager';
-        attachImageFallback(img, art.title);
+    function makeImg(art, cls) {
+        const img = el('img', cls);
+        img.alt = `${art.title} — ${art.medium}`;
+        img.decoding = 'async';
+        img.addEventListener('error', () => { img.src = fallbackImage(art.title); }, { once: true });
         img.src = art.imageUrl;
-        
-        frame.appendChild(img);
-        inner.appendChild(frame);
-        item.appendChild(inner);
-        carouselRing.appendChild(item);
-        
-        // Entrance: pieces settle into formation rather than just appearing
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => inner.classList.add('settled'));
+        return img;
+    }
+
+    function makeFrame(art, i) {
+        const frame = el('div', `frame ${frameStyle(art, i)}`);
+        const mat = el('div', 'mat');
+        mat.appendChild(makeImg(art));
+        frame.appendChild(mat);
+        if (isSold(art)) frame.appendChild(el('span', 'sold-sticker'));
+        return frame;
+    }
+
+    /* ------------------------------------------------------------------
+       Identity: fill name, tagline, links from config
+       ------------------------------------------------------------------ */
+    function bindIdentity() {
+        const [first, ...rest] = CFG.artistName.split(' ');
+        const values = {
+            artistName: CFG.artistName,
+            studioName: CFG.studioName,
+            tagline: CFG.tagline,
+            firstName: first,
+            lastName: rest.join(' ') || '',
+            monogram: CFG.artistName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+        };
+        $$('[data-bind]').forEach(node => {
+            const v = values[node.dataset.bind];
+            if (v !== undefined) node.textContent = v;
         });
-        
-        item.addEventListener('click', () => {
-            if (!carouselDidDrag) openModal(art);
+        document.title = `${CFG.studioName} | ${CFG.tagline}`;
+        $('#year').textContent = new Date().getFullYear();
+
+        const portfolio = $('#portfolioLink');
+        if (CFG.portfolioUrl) portfolio.href = CFG.portfolioUrl; else portfolio.hidden = true;
+        const insta = $('#instagramLink');
+        if (CFG.instagramUrl) { insta.href = CFG.instagramUrl; insta.hidden = false; }
+
+        const first2 = CFG.artistName.split(' ')[0];
+        const messages = {
+            general: `Hi ${first2}! I've been walking through your online gallery and would love to talk about your work.`,
+            commission: `Hi ${first2}! I'd like to discuss commissioning an original piece.`
+        };
+        $$('[data-whatsapp]').forEach(a => {
+            a.href = waLink(messages[a.dataset.whatsapp] || messages.general);
+            a.target = '_blank';
+            a.rel = 'noopener';
         });
-    });
-    
-    sizeCarouselItems();
-    window.addEventListener('resize', debounce(sizeCarouselItems, 200));
-    
-    setupCarouselInteraction();
-    updateNowViewing(true);
-    
-    if (!carouselRafId) {
-        carouselLastFrameTime = null;
-        carouselRafId = requestAnimationFrame(carouselTick);
     }
-}
 
-function sizeCarouselItems() {
-    const items = carouselRing.querySelectorAll('.ring-item');
-    if (items.length === 0) return;
-    const n = items.length;
-    const viewportRect = carouselViewport.getBoundingClientRect();
-    const itemW = Math.max(110, Math.min(210, viewportRect.width * 0.44));
-    const itemH = itemW * 1.25;
-    carouselRadius = Math.round(((itemW * n) / (2 * Math.PI)) * 1.35);
-    
-    items.forEach((item, i) => {
-        item.style.width = `${itemW}px`;
-        item.style.height = `${itemH}px`;
-        item.style.marginLeft = `-${itemW / 2}px`;
-        item.style.marginTop = `-${itemH / 2}px`;
-        item.style.transform = `rotateY(${i * carouselSegment}deg) translateZ(${carouselRadius}px)`;
-    });
-}
-
-function carouselTick(timestamp) {
-    if (carouselLastFrameTime === null) carouselLastFrameTime = timestamp;
-    const dt = (timestamp - carouselLastFrameTime) / 1000;
-    carouselLastFrameTime = timestamp;
-    
-    if (!carouselPaused && !carouselDragging && !reducedMotionPreferred()) {
-        carouselAngle += CAROUSEL_DEGREES_PER_SECOND * dt;
+    /* ------------------------------------------------------------------
+       Data loading (Google Sheet CSV → local JSON fallback)
+       ------------------------------------------------------------------ */
+    function splitCsvLine(line) {
+        const out = [];
+        let field = '', quoted = false;
+        for (let i = 0; i < line.length; i++) {
+            const c = line[i];
+            if (c === '"' && line[i + 1] === '"') { field += '"'; i++; }
+            else if (c === '"') quoted = !quoted;
+            else if (c === ',' && !quoted) { out.push(field.trim()); field = ''; }
+            else field += c;
+        }
+        out.push(field.trim());
+        return out;
     }
-    
-    carouselRing.style.transform = `rotateY(${carouselAngle}deg)`;
-    updateNowViewing(false);
-    
-    carouselRafId = requestAnimationFrame(carouselTick);
-}
 
-// Determine which ring item currently faces the viewer, and update the
-// "Now Viewing" plaque plus the ambient background glow to match.
-function updateNowViewing(force) {
-    if (carouselItems.length === 0) return;
-    const n = carouselItems.length;
-    let bestIndex = 0;
-    let bestDelta = Infinity;
-    
-    for (let i = 0; i < n; i++) {
-        let facing = (carouselAngle + i * carouselSegment) % 360;
-        if (facing > 180) facing -= 360;
-        if (facing < -180) facing += 360;
-        const delta = Math.abs(facing);
-        if (delta < bestDelta) {
-            bestDelta = delta;
-            bestIndex = i;
+    function parseCsv(text) {
+        const lines = text.split(/\r?\n/).filter(l => l.trim());
+        if (lines.length < 2) return [];
+        const headers = splitCsvLine(lines[0]).map(h => h.trim().toLowerCase());
+        const pick = (row, keys) => {
+            for (const k of keys) if (row[k]) return row[k];
+            return '';
+        };
+        return lines.slice(1).map((line, i) => {
+            const fields = splitCsvLine(line);
+            const row = {};
+            headers.forEach((h, idx) => { row[h] = fields[idx] || ''; });
+            return {
+                id: pick(row, ['id']) || String(i + 1),
+                title: pick(row, ['title']) || 'Untitled',
+                category: pick(row, ['category']) || 'Paintings',
+                price: pick(row, ['price']),
+                dimensions: pick(row, ['dimensions', 'dimension', 'size']) || 'Dimensions on request',
+                medium: pick(row, ['medium', 'meduim']) || 'Original work',
+                description: pick(row, ['description', 'desc']),
+                imageUrl: pick(row, ['imageurl', 'image url', 'image']),
+                status: pick(row, ['status']) || 'Available'
+            };
+        }).filter(a => a.imageUrl);
+    }
+
+    async function loadCollection() {
+        if (CFG.spreadsheetUrl) {
+            try {
+                const res = await fetch(CFG.spreadsheetUrl, { cache: 'no-store' });
+                if (res.ok) {
+                    const rows = parseCsv(await res.text());
+                    if (rows.length) return rows;
+                }
+            } catch (e) { /* fall through to the local file */ }
+        }
+        try {
+            const res = await fetch(CFG.fallbackDatabasePath, { cache: 'no-store' });
+            const rows = await res.json();
+            usingSamples = rows.some(r => r.sample);
+            return rows;
+        } catch (e) {
+            return [];
         }
     }
-    
-    if (bestIndex !== carouselActiveIndex || force) {
-        carouselActiveIndex = bestIndex;
-        const art = carouselItems[bestIndex];
-        if (nowViewingTitle) nowViewingTitle.textContent = art.title || 'Untitled Artwork';
-        if (nowViewingMedium) nowViewingMedium.textContent = art.medium || '';
-        swapCarouselGlow(art.imageUrl);
-    }
-}
 
-// Crossfades the ambient background glow between two stacked layers
-function swapCarouselGlow(imageUrl) {
-    if (!carouselGlowA || !carouselGlowB || !imageUrl) return;
-    const showA = carouselGlowToggle;
-    carouselGlowToggle = !carouselGlowToggle;
-    const front = showA ? carouselGlowA : carouselGlowB;
-    const back = showA ? carouselGlowB : carouselGlowA;
-    front.style.backgroundImage = `url("${imageUrl}")`;
-    front.style.opacity = '1';
-    back.style.opacity = '0';
-}
+    /* ------------------------------------------------------------------
+       Entrance
+       ------------------------------------------------------------------ */
+    function renderEntrance() {
+        const featured = collection.find(a => !isSold(a)) || collection[0];
+        $('#factCount').textContent = collection.length || '—';
+        $('#factAvailable').textContent = collection.filter(a => !isSold(a)).length;
+        if (!featured) return;
+        const img = $('#featuredImg');
+        img.alt = `${featured.title} — ${featured.medium}`;
+        img.addEventListener('error', () => { img.src = fallbackImage(featured.title); }, { once: true });
+        img.src = featured.imageUrl;
+        $('#featuredTitle').textContent = featured.title;
+        const piece = $('#featured');
+        piece.style.cursor = 'pointer';
+        piece.dataset.cursor = 'view';
+        piece.onclick = () => openViewer(collection.indexOf(featured), collection);
 
-function setupCarouselInteraction() {
-    let startX = 0;
-    let startAngle = 0;
-    let lastX = 0;
-    let lastTime = 0;
-    let velocity = 0;
-    
-    const onPointerDown = (e) => {
-        carouselDragging = true;
-        carouselDidDrag = false;
-        carouselViewport.classList.add('grabbing');
-        startX = e.clientX;
-        lastX = e.clientX;
-        startAngle = carouselAngle;
-        lastTime = performance.now();
-        velocity = 0;
-        if (carouselViewport.setPointerCapture) {
-            try { carouselViewport.setPointerCapture(e.pointerId); } catch (err) { /* no-op */ }
+        // a soft light that follows the cursor across the entrance hall
+        if (finePointer && !reduceMotion) {
+            const hall = $('#entrance');
+            hall.addEventListener('pointermove', e => {
+                const r = hall.getBoundingClientRect();
+                hall.style.setProperty('--lx', `${((e.clientX - r.left) / r.width) * 100}%`);
+                hall.style.setProperty('--ly', `${((e.clientY - r.top) / r.height) * 100}%`);
+            });
         }
-    };
-    
-    const onPointerMove = (e) => {
-        if (!carouselDragging) return;
-        const dx = e.clientX - startX;
-        if (Math.abs(dx) > 4) carouselDidDrag = true;
-        carouselAngle = startAngle - dx * 0.35;
-        
-        const now = performance.now();
-        const dt = now - lastTime;
-        if (dt > 0) velocity = ((e.clientX - lastX) / dt) * -0.35;
-        lastX = e.clientX;
-        lastTime = now;
-    };
-    
-    const onPointerUp = () => {
-        if (!carouselDragging) return;
-        carouselDragging = false;
-        carouselViewport.classList.remove('grabbing');
-        applyCarouselMomentum(velocity * 16);
-    };
-    
-    carouselViewport.addEventListener('pointerdown', onPointerDown);
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-    window.addEventListener('pointercancel', onPointerUp);
-    
-    carouselViewport.addEventListener('mouseenter', () => { carouselPaused = true; });
-    carouselViewport.addEventListener('mouseleave', () => { carouselPaused = false; });
-    
-    carouselViewport.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowLeft') {
-            carouselAngle -= carouselSegment;
-            carouselPaused = true;
-        } else if (e.key === 'ArrowRight') {
-            carouselAngle += carouselSegment;
-            carouselPaused = true;
-        }
-    });
-}
-
-function applyCarouselMomentum(initialVelocity) {
-    let v = initialVelocity;
-    const friction = 0.94;
-    function step() {
-        if (Math.abs(v) < 0.02) return;
-        carouselAngle += v;
-        v *= friction;
-        requestAnimationFrame(step);
     }
-    if (Math.abs(v) > 0.02) step();
-}
 
-/* ==========================================================================
-   Hero Spotlight — cursor-tracked gallery lighting
-   ========================================================================== */
+    /* ------------------------------------------------------------------
+       The corridor: hang exhibits, then map vertical scroll → sideways walk
+       ------------------------------------------------------------------ */
+    const corridor = $('#corridor');
+    const track = $('#track');
+    let walkDistance = 0;
 
-function setupHeroSpotlight() {
-    const hero = document.querySelector('.hero');
-    if (!hero || isCoarsePointer() || reducedMotionPreferred()) return;
-    
-    hero.addEventListener('mousemove', (e) => {
-        const rect = hero.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-        hero.style.setProperty('--mx', `${x}%`);
-        hero.style.setProperty('--my', `${y}%`);
-    });
-}
+    function renderCorridor() {
+        $$('.exhibit.work', track).forEach(n => n.remove());
+        const outro = $('.outro-panel', track);
 
-/* ==========================================================================
-   Scroll Reveal — fades sections in as they enter the viewport
-   ========================================================================== */
+        shown.forEach((art, i) => {
+            const ex = el('article', `exhibit work${isSketch(art) ? ' sketch' : ''}${isSold(art) ? ' is-sold' : ''}`);
 
-function setupScrollReveal() {
-    const revealEls = document.querySelectorAll('[data-reveal]');
-    if (revealEls.length === 0) return;
-    
-    if (!('IntersectionObserver' in window) || reducedMotionPreferred()) {
-        revealEls.forEach(el => el.classList.add('revealed'));
-        return;
+            const hang = el('div', 'art-hang');
+            hang.dataset.cursor = 'view';
+            hang.setAttribute('role', 'button');
+            hang.tabIndex = 0;
+            hang.setAttribute('aria-label', `View ${art.title}`);
+            const frame = makeFrame(art, i);
+            hang.appendChild(frame);
+            hang.addEventListener('click', () => openViewer(i, shown));
+            hang.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openViewer(i, shown); } });
+            frame.querySelector('img').addEventListener('load', layoutCorridor);
+
+            const plaque = el('div', 'plaque');
+            plaque.appendChild(el('span', 'plaque-no', `No. ${pad2(i + 1)} · ${art.category}`));
+            plaque.appendChild(el('h3', null, art.title));
+            plaque.appendChild(el('p', 'plaque-artist', CFG.artistName));
+            const meta = el('p', 'plaque-meta');
+            meta.append(art.medium, el('br'), art.dimensions);
+            plaque.appendChild(meta);
+            const foot = el('div', 'plaque-foot');
+            foot.appendChild(el('span', 'plaque-price', isSold(art) ? 'Sold' : formatPrice(art.price)));
+            foot.appendChild(el('span', `status-dot${isSold(art) ? ' sold' : ''}`, isSold(art) ? 'Collected' : 'Available'));
+            plaque.appendChild(foot);
+            const actions = el('div', 'plaque-actions');
+            const view = el('button', null, 'View');
+            view.type = 'button';
+            view.addEventListener('click', () => openViewer(i, shown));
+            const acq = el('a', `acq${isSold(art) ? ' disabled' : ''}`, isSold(art) ? 'Sold' : 'Acquire');
+            acq.href = isSold(art) ? '#' : waLink(buyMessage(art));
+            acq.target = '_blank';
+            acq.rel = 'noopener';
+            actions.append(view, acq);
+            plaque.appendChild(actions);
+
+            ex.append(hang, plaque);
+            track.insertBefore(ex, outro);
+        });
+
+        $('#corridorTotal').textContent = pad2(shown.length);
+        layoutCorridor();
     }
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('revealed');
-                observer.unobserve(entry.target);
+
+    function layoutCorridor() {
+        walkDistance = Math.max(0, track.scrollWidth - window.innerWidth);
+        corridor.style.height = `${walkDistance + window.innerHeight}px`;
+        walk();
+    }
+
+    let ticking = false;
+    function walk() {
+        ticking = false;
+        const start = corridor.offsetTop;
+        const p = walkDistance ? Math.min(1, Math.max(0, (window.scrollY - start) / walkDistance)) : 0;
+        track.style.transform = `translate3d(${-p * walkDistance}px, 0, 0)`;
+        $('#corridorBar').style.transform = `scaleX(${p})`;
+
+        // which work is closest to the centre of the screen
+        const works = $$('.exhibit.work', track);
+        let best = 0, bestD = Infinity;
+        works.forEach((w, i) => {
+            const r = w.getBoundingClientRect();
+            const d = Math.abs(r.left + r.width / 2 - window.innerWidth / 2);
+            if (d < bestD) { bestD = d; best = i; }
+        });
+        $('#corridorIndex').textContent = pad2(works.length ? best + 1 : 0);
+    }
+
+    function onScroll() {
+        if (!ticking) { ticking = true; requestAnimationFrame(walk); }
+        $('#siteHeader').classList.toggle('scrolled', window.scrollY > 40);
+    }
+
+    function setupFilter() {
+        $$('.room-filter button').forEach(btn => btn.addEventListener('click', () => {
+            $$('.room-filter button').forEach(b => {
+                b.classList.toggle('active', b === btn);
+                b.setAttribute('aria-selected', String(b === btn));
+            });
+            const f = btn.dataset.filter;
+            shown = f === 'all' ? collection.slice() : collection.filter(a => a.category.toLowerCase() === f.toLowerCase());
+            renderCorridor();
+            // return to the start of the corridor so the new room is seen from the beginning
+            if (window.scrollY > corridor.offsetTop) window.scrollTo({ top: corridor.offsetTop, behavior: reduceMotion ? 'auto' : 'smooth' });
+        }));
+    }
+
+    /* ------------------------------------------------------------------
+       Catalogue
+       ------------------------------------------------------------------ */
+    function renderCatalogue() {
+        const rows = $('#catalogueRows');
+        rows.textContent = '';
+        const preview = $('#catPreview');
+        const pimg = preview.querySelector('img');
+
+        collection.forEach((art, i) => {
+            const row = el('div', 'cat-row');
+            row.setAttribute('role', 'row');
+            row.tabIndex = 0;
+            row.dataset.cursor = 'view';
+            row.appendChild(el('span', 'cat-no', pad2(i + 1)));
+            const title = el('span', 'cat-title', art.title);
+            title.appendChild(el('small', null, art.category));
+            row.appendChild(title);
+            row.appendChild(el('span', 'hide-sm', art.medium));
+            row.appendChild(el('span', 'hide-sm', art.dimensions));
+            row.appendChild(el('span', `cat-price${isSold(art) ? ' sold' : ''}`, isSold(art) ? 'Sold' : formatPrice(art.price)));
+            row.addEventListener('click', () => openViewer(i, collection));
+            row.addEventListener('keydown', e => { if (e.key === 'Enter') openViewer(i, collection); });
+
+            if (finePointer) {
+                row.addEventListener('pointerenter', () => { pimg.src = art.imageUrl; preview.classList.add('show'); });
+                row.addEventListener('pointerleave', () => preview.classList.remove('show'));
+                row.addEventListener('pointermove', e => {
+                    preview.style.left = `${e.clientX + 30}px`;
+                    preview.style.top = `${e.clientY - 120}px`;
+                });
             }
+            rows.appendChild(row);
         });
-    }, { threshold: 0.15, rootMargin: '0px 0px -80px 0px' });
-    
-    revealEls.forEach(el => observer.observe(el));
-}
+    }
 
-/* ==========================================================================
-   Nav Scrollspy — highlights the section currently in view
-   ========================================================================== */
+    /* ------------------------------------------------------------------
+       Viewing room
+       ------------------------------------------------------------------ */
+    const viewer = $('#viewer');
+    let vList = [], vIndex = 0, lastFocus = null;
 
-function setupNavScrollSpy() {
-    const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
-    if (navLinks.length === 0 || !('IntersectionObserver' in window)) return;
-    
-    const linkMap = {};
-    navLinks.forEach(link => {
-        const id = link.getAttribute('href').replace('#', '');
-        if (id) linkMap[id] = link;
-    });
-    
-    const targets = Object.keys(linkMap)
-        .map(id => document.getElementById(id))
-        .filter(Boolean);
-    if (targets.length === 0) return;
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            const link = linkMap[entry.target.id];
-            if (!link) return;
-            if (entry.isIntersecting) {
-                navLinks.forEach(l => l.classList.remove('active'));
-                link.classList.add('active');
-            }
+    function fillViewer() {
+        const art = vList[vIndex];
+        const frame = $('#viewerFrame');
+        frame.className = `frame ${frameStyle(art, collection.indexOf(art))}`;
+        const img = $('#viewerImg');
+        img.onerror = () => { img.src = fallbackImage(art.title); };
+        img.src = art.imageUrl;
+        img.alt = `${art.title} — ${art.medium}`;
+        $('#viewerCategory').textContent = art.category;
+        $('#viewerTitle').textContent = art.title;
+        $('#viewerMedium').textContent = art.medium;
+        $('#viewerSize').textContent = art.dimensions;
+        $('#viewerStatus').textContent = isSold(art) ? 'In a private collection' : 'Available';
+        $('#viewerDesc').textContent = art.description || '';
+        $('#viewerPrice').textContent = isSold(art) ? 'Sold' : formatPrice(art.price);
+        const buy = $('#viewerBuy');
+        if (isSold(art)) {
+            buy.classList.add('disabled');
+            buy.removeAttribute('href');
+            buy.innerHTML = 'This work has been collected';
+        } else {
+            buy.classList.remove('disabled');
+            buy.href = waLink(buyMessage(art));
+            buy.innerHTML = '<i class="fa-brands fa-whatsapp"></i> Acquire via WhatsApp';
+        }
+        $('#viewerIndex').textContent = `${pad2(vIndex + 1)} / ${pad2(vList.length)}`;
+        const many = vList.length > 1;
+        $('#viewerPrev').hidden = !many;
+        $('#viewerNext').hidden = !many;
+    }
+
+    function openViewer(i, list) {
+        if (!list.length) return;
+        vList = list; vIndex = i;
+        lastFocus = document.activeElement;
+        fillViewer();
+        viewer.hidden = false;
+        document.body.style.overflow = 'hidden';
+        requestAnimationFrame(() => requestAnimationFrame(() => viewer.classList.add('open')));
+        $('.viewer-close', viewer).focus({ preventScroll: true });
+    }
+
+    function closeViewer() {
+        viewer.classList.remove('open');
+        document.body.style.overflow = '';
+        $('#loupe').classList.remove('on');
+        setTimeout(() => { viewer.hidden = true; }, reduceMotion ? 0 : 450);
+        if (lastFocus) lastFocus.focus({ preventScroll: true });
+    }
+
+    function step(d) {
+        vIndex = (vIndex + d + vList.length) % vList.length;
+        fillViewer();
+    }
+
+    function setupViewer() {
+        $$('[data-close]', viewer).forEach(n => n.addEventListener('click', closeViewer));
+        $('#viewerPrev').addEventListener('click', () => step(-1));
+        $('#viewerNext').addEventListener('click', () => step(1));
+        document.addEventListener('keydown', e => {
+            if (viewer.hidden) return;
+            if (e.key === 'Escape') closeViewer();
+            if (e.key === 'ArrowLeft') step(-1);
+            if (e.key === 'ArrowRight') step(1);
         });
-    }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
-    
-    targets.forEach(t => observer.observe(t));
-}
 
-/* ==========================================================================
-   Magnetic Buttons — subtle cursor-follow on primary calls to action
-   ========================================================================== */
+        // Magnifying loupe over the artwork
+        const img = $('#viewerImg');
+        const loupe = $('#loupe');
+        const ZOOM = 2.6;
+        if (finePointer) {
+            img.addEventListener('pointerenter', () => {
+                loupe.style.backgroundImage = `url("${img.currentSrc || img.src}")`;
+                loupe.classList.add('on');
+            });
+            img.addEventListener('pointerleave', () => loupe.classList.remove('on'));
+            img.addEventListener('pointermove', e => {
+                const r = img.getBoundingClientRect();
+                const x = e.clientX - r.left, y = e.clientY - r.top;
+                loupe.style.left = `${e.clientX}px`;
+                loupe.style.top = `${e.clientY}px`;
+                loupe.style.backgroundSize = `${r.width * ZOOM}px ${r.height * ZOOM}px`;
+                loupe.style.backgroundPosition = `${-(x * ZOOM - 95)}px ${-(y * ZOOM - 95)}px`;
+            });
+        }
+    }
 
-function setupMagneticButtons() {
-    if (isCoarsePointer() || reducedMotionPreferred()) return;
-    const targets = document.querySelectorAll('.hero-btn, .general-inquiry-btn');
-    
-    targets.forEach(btn => {
-        btn.addEventListener('mousemove', (e) => {
-            const rect = btn.getBoundingClientRect();
-            const x = e.clientX - rect.left - rect.width / 2;
-            const y = e.clientY - rect.top - rect.height / 2;
-            btn.style.transform = `translate(${(x * 0.18).toFixed(1)}px, ${(y * 0.35).toFixed(1)}px)`;
+    /* ------------------------------------------------------------------
+       Cursor, reveal, nav, curtain
+       ------------------------------------------------------------------ */
+    function setupCursor() {
+        if (!finePointer || reduceMotion) return;
+        const c = $('.cursor');
+        let x = innerWidth / 2, y = innerHeight / 2, cx = x, cy = y;
+        document.addEventListener('pointermove', e => {
+            x = e.clientX; y = e.clientY;
+            document.body.classList.add('has-cursor');
+            const t = e.target.closest('[data-cursor="view"], .cat-row:not(.cat-head)');
+            const link = !t && e.target.closest('a, button');
+            c.classList.toggle('is-view', !!t && viewer.hidden);
+            c.classList.toggle('is-link', !!link);
         });
-        btn.addEventListener('mouseleave', () => {
-            btn.style.transform = '';
-        });
-    });
-}
+        document.addEventListener('pointerleave', () => document.body.classList.remove('has-cursor'));
+        (function follow() {
+            cx += (x - cx) * 0.2; cy += (y - cy) * 0.2;
+            c.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
+            requestAnimationFrame(follow);
+        })();
+    }
+
+    function setupReveal() {
+        const items = $$('.reveal');
+        if (!('IntersectionObserver' in window) || reduceMotion) { items.forEach(n => n.classList.add('in')); return; }
+        const io = new IntersectionObserver(entries => entries.forEach(e => {
+            if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+        }), { threshold: 0.15 });
+        items.forEach(n => io.observe(n));
+    }
+
+    function setupNavSpy() {
+        const links = $$('.site-nav a');
+        const io = new IntersectionObserver(entries => entries.forEach(e => {
+            if (!e.isIntersecting) return;
+            links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id));
+        }), { rootMargin: '-45% 0px -45% 0px' });
+        ['corridor', 'catalogue', 'artist', 'acquire'].forEach(id => io.observe(document.getElementById(id)));
+    }
+
+    function openCurtain() {
+        document.body.classList.add('opened');
+        setTimeout(() => document.body.classList.remove('is-loading'), reduceMotion ? 0 : 1200);
+    }
+
+    /* ------------------------------------------------------------------
+       Boot
+       ------------------------------------------------------------------ */
+    async function init() {
+        bindIdentity();
+        setupCursor();
+        setupViewer();
+        setupFilter();
+        setupReveal();
+        setupNavSpy();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', layoutCorridor);
+        if ('ResizeObserver' in window) new ResizeObserver(layoutCorridor).observe(track);
+
+        // never keep visitors behind the curtain for long, even on a slow sheet
+        const started = Date.now();
+        const safety = setTimeout(openCurtain, 3500);
+
+        collection = await loadCollection();
+        shown = collection.slice();
+        $('#previewRibbon').hidden = !usingSamples;
+
+        renderEntrance();
+        renderCorridor();
+        renderCatalogue();
+        onScroll();
+
+        const wait = reduceMotion ? 0 : Math.max(0, 1100 - (Date.now() - started));
+        setTimeout(() => { clearTimeout(safety); openCurtain(); }, wait);
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+})();
