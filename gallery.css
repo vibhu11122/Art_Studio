@@ -22,7 +22,7 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; overflow-x: hidden; }
 body {
     font-family: var(--sans);
     font-weight: 300;
@@ -127,6 +127,8 @@ h2 em, h1 em { font-style: italic; color: var(--gold-2); }
 body.opened .curtain-panel.left { transform: translateX(-102%); }
 body.opened .curtain-panel.right { transform: translateX(102%); }
 body.opened .curtain-mark { opacity: 0; }
+/* once the panels have slid away, take the curtain out of the page entirely */
+body.opened .curtain { visibility: hidden; transition: visibility 0s linear 1.8s; }
 
 /* ---------- Cursor ---------- */
 .cursor {
@@ -348,33 +350,11 @@ body.opened .entrance-piece { opacity: 1; transform: none; }
 }
 @keyframes sway { from { transform: translateX(-52%); } to { transform: translateX(-48%); } }
 
-/* ---------- Corridor ---------- */
-.corridor { position: relative; background: var(--wall); }
-.corridor-sticky {
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    height: 100svh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    background:
-        linear-gradient(180deg, rgba(0, 0, 0, 0.35), transparent 22%),
-        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.012) 0 1px, transparent 1px 160px),
-        linear-gradient(180deg, #1d1813, var(--wall) 60%);
-}
-.corridor-hud {
-    position: relative;
-    z-index: 3;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.5rem;
-    padding: 6.2rem clamp(1.25rem, 4vw, 3.5rem) 0;
-}
-.room-title { display: flex; flex-direction: column; }
-.room-num { font-size: 0.62rem; letter-spacing: 0.32em; text-transform: uppercase; color: var(--gold); }
-.room-name { font-family: var(--serif); font-size: 1.5rem; font-style: italic; }
+/* ---------- The collection: vertical, spotlit bays ---------- */
+.collection { position: relative; overflow: hidden; padding: 9rem clamp(1.25rem, 6vw, 6rem) 6rem; background: linear-gradient(180deg, var(--wall), #1a1612 50%, var(--wall)); }
+.collection-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 2rem; max-width: 1200px; margin: 0 auto 4rem; }
+.collection-head .section-head { margin-bottom: 0; }
+
 .room-filter { display: flex; gap: 0.25rem; padding: 0.3rem; border: 1px solid var(--line); background: rgba(23, 19, 15, 0.6); }
 .room-filter button {
     font-family: var(--sans);
@@ -384,91 +364,67 @@ body.opened .entrance-piece { opacity: 1; transform: none; }
     color: var(--ivory-dim);
     background: none;
     border: none;
-    padding: 0.6rem 1rem;
+    padding: 0.7rem 1.1rem;
     cursor: pointer;
     transition: background 0.35s, color 0.35s;
 }
 .room-filter button:hover { color: var(--ivory); }
 .room-filter button.active { background: var(--ivory); color: #17130f; }
-.room-counter { font-family: var(--serif); font-size: 1.2rem; color: var(--ivory-dim); min-width: 5rem; text-align: right; }
-.room-counter span:first-child { color: var(--gold-2); font-size: 1.6rem; }
 
-.wall { position: relative; flex: 1; display: flex; align-items: center; }
-.track {
-    display: flex;
-    align-items: center;
-    gap: clamp(4rem, 9vw, 9rem);
-    padding: 0 clamp(2rem, 8vw, 9rem);
-    will-change: transform;
-    height: 100%;
-}
+.hall { max-width: 1200px; margin: 0 auto; }
 
-.exhibit {
+.bay {
     position: relative;
-    flex: none;
-    display: flex;
-    align-items: flex-end;
-    gap: 2.2rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.65fr);
+    align-items: center;
+    gap: clamp(2.5rem, 6vw, 6rem);
+    padding: clamp(4rem, 9vh, 7rem) 0;
+    border-bottom: 1px solid var(--line);
 }
-.exhibit .art-hang { position: relative; cursor: pointer; transition: transform 0.9s var(--ease); }
-.exhibit .art-hang:hover { transform: translateY(-6px); }
-.exhibit .frame img { height: min(52vh, 560px); width: auto; transition: filter 0.8s; }
-.exhibit.sketch .frame img { height: min(44vh, 470px); }
-.exhibit.is-sold .frame img { filter: saturate(0.85); }
+.bay:last-child { border-bottom: none; }
+.bay.flip { grid-template-columns: minmax(0, 0.65fr) minmax(0, 1.35fr); }
+.bay.flip .art-hang { order: 2; }
 
-/* light pooled on the wall behind each work */
-.exhibit .art-hang::before {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: -45%;
-    width: 200%;
-    height: 190%;
-    transform: translateX(-50%);
-    background: radial-gradient(ellipse 40% 55% at 50% 10%, rgba(255, 236, 196, 0.15), transparent 70%);
-    pointer-events: none;
-    z-index: -1;
-}
-/* the little brass spotlight fixture */
-.exhibit .art-hang::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: -64px;
-    width: 46px; height: 10px;
-    margin-left: -23px;
-    border-radius: 2px 2px 8px 8px;
-    background: linear-gradient(#5b4a33, #2b241b);
-    box-shadow: 0 0 0 1px rgba(201, 169, 110, 0.25), 0 10px 26px 4px rgba(255, 236, 196, 0.18);
-}
+.bay .art-hang { position: relative; justify-self: center; cursor: pointer; isolation: isolate; transition: transform 0.9s var(--ease); }
+.bay .art-hang:hover { transform: translateY(-6px); }
+.bay .frame img { max-height: min(68vh, 640px); max-width: 100%; width: auto; height: auto; }
+.bay.sketch .frame img { max-height: min(58vh, 540px); }
+.bay.is-sold .frame img { filter: saturate(0.85); }
+.bay .spot-cone { top: -30%; height: 140%; }
+
+/* gentle entrance as each bay is reached */
+.bay .art-hang, .bay .plaque { opacity: 0; transform: translateY(40px); transition: opacity 1.2s var(--ease), transform 1.2s var(--ease); }
+.bay .plaque { transition-delay: 0.15s; }
+.bay.in .art-hang, .bay.in .plaque { opacity: 1; transform: none; }
+.bay.in .art-hang:hover { transform: translateY(-6px); }
 
 .plaque {
-    width: 220px;
-    padding: 1.2rem 1.25rem 1.1rem;
-    margin-bottom: 0.5rem;
+    padding: 1.8rem 1.75rem 1.6rem;
     background: linear-gradient(160deg, #2a231c, #1b1612);
     border: 1px solid rgba(201, 169, 110, 0.22);
-    box-shadow: 0 20px 40px -24px rgba(0, 0, 0, 0.9);
+    box-shadow: 0 24px 50px -28px rgba(0, 0, 0, 0.9);
 }
 .plaque-no { font-size: 0.6rem; letter-spacing: 0.3em; color: var(--gold); text-transform: uppercase; }
-.plaque h3 { font-size: 1.55rem; font-style: italic; margin: 0.35rem 0 0.2rem; }
-.plaque-artist { font-size: 0.72rem; color: var(--ivory-dim); }
-.plaque-meta { margin-top: 0.75rem; font-size: 0.74rem; color: var(--muted); line-height: 1.55; }
-.plaque-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px solid var(--line); }
-.plaque-price { font-family: var(--serif); font-size: 1.25rem; }
+.plaque h3 { font-size: clamp(1.9rem, 3vw, 2.5rem); font-style: italic; margin: 0.5rem 0 0.25rem; }
+.plaque-artist { font-size: 0.78rem; color: var(--ivory-dim); }
+.plaque-desc { font-family: var(--serif); font-style: italic; font-size: 1.1rem; line-height: 1.5; color: var(--ivory-dim); margin-top: 1.1rem; }
+.plaque-meta { margin-top: 1rem; font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+.plaque-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.plaque-price { font-family: var(--serif); font-size: 1.6rem; }
 .status-dot { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ivory-dim); }
 .status-dot::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #7fbf8e; box-shadow: 0 0 10px #7fbf8e; }
 .status-dot.sold::before { background: #b5473d; box-shadow: none; }
-.plaque-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+.plaque-actions { display: flex; gap: 0.5rem; margin-top: 1.3rem; }
 .plaque-actions a, .plaque-actions button {
     flex: 1;
     font-family: var(--sans);
-    font-size: 0.58rem;
+    font-size: 0.62rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     text-align: center;
     text-decoration: none;
-    padding: 0.65rem 0.4rem;
+    padding: 0.85rem 0.5rem;
     border: 1px solid rgba(241, 235, 221, 0.22);
     background: none;
     color: var(--ivory);
@@ -489,23 +445,10 @@ body.opened .entrance-piece { opacity: 1; transform: none; }
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
-.intro-panel, .outro-panel { flex-direction: column; align-items: flex-start; max-width: 360px; gap: 1.2rem; }
-.intro-panel h2, .outro-panel h2 { font-size: clamp(2.8rem, 5vw, 4.4rem); }
-.intro-panel p:not(.eyebrow) { color: var(--ivory-dim); font-size: 0.95rem; }
-.intro-arrow { font-family: var(--serif); font-size: 3rem; color: var(--gold); animation: nudge 2s var(--ease) infinite; }
-@keyframes nudge { 50% { transform: translateX(14px); } }
-.outro-actions { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; }
-
-.floor {
-    height: 15vh;
-    background:
-        linear-gradient(180deg, rgba(201, 169, 110, 0.10), transparent 3px),
-        linear-gradient(180deg, #120f0c, var(--floor));
-    border-top: 1px solid rgba(201, 169, 110, 0.18);
-    flex: none;
-}
-.corridor-progress { position: absolute; left: clamp(1.25rem, 4vw, 3.5rem); right: clamp(1.25rem, 4vw, 3.5rem); bottom: 6vh; height: 1px; background: var(--line); }
-.corridor-progress span { display: block; height: 100%; width: 100%; background: var(--gold); transform-origin: left; transform: scaleX(0); }
+.hall-empty { text-align: center; color: var(--ivory-dim); font-family: var(--serif); font-style: italic; font-size: 1.4rem; padding: 4rem 0; }
+.hall-end { max-width: 1200px; margin: 3rem auto 0; padding-top: 4rem; border-top: 1px solid var(--line); text-align: center; }
+.hall-end h3 { font-size: clamp(2.2rem, 4.5vw, 3.6rem); margin: 1.2rem 0 2rem; }
+.hall-end-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; }
 
 /* ---------- Section heads ---------- */
 .section-head { margin-bottom: 4rem; }
@@ -706,6 +649,9 @@ body.opened .entrance-piece { opacity: 1; transform: none; }
     .entrance-piece .frame img { max-height: 46vh; }
     .mini-plaque { right: 0; }
     .artist { grid-template-columns: 1fr; }
+    .bay, .bay.flip { grid-template-columns: 1fr; gap: 2rem; padding: 3.5rem 0; }
+    .bay.flip .art-hang { order: 0; }
+    .bay .plaque { max-width: 520px; width: 100%; justify-self: center; }
     .steps { grid-template-columns: 1fr; }
     .viewer-stage { grid-template-columns: 1fr; align-items: start; padding-top: 5.5rem; max-height: 100vh; max-height: 100svh; }
     .viewer-art .frame img { max-width: 78vw; max-height: 52vh; }
@@ -718,27 +664,21 @@ body.opened .entrance-piece { opacity: 1; transform: none; }
 @media (max-width: 640px) {
     .brand-sub { display: none; }
     .header-cta span { display: none; }
-    .corridor-hud { flex-wrap: wrap; padding-top: 5.2rem; gap: 0.8rem; }
-    .room-counter { display: none; }
-    .room-filter { order: 3; width: 100%; }
-    .room-filter button { flex: 1; padding: 0.6rem 0.4rem; letter-spacing: 0.12em; }
-    .track { gap: 22vw; padding: 0 11vw; }
-    .exhibit.work { width: 78vw; flex-direction: column; align-items: center; gap: 1.2rem; }
-    .exhibit .frame img, .exhibit.sketch .frame img { height: auto; width: auto; max-height: 34vh; max-width: 56vw; }
-    .intro-panel, .outro-panel { width: 78vw; }
+    .collection { padding-top: 7rem; }
+    .collection-head { margin-bottom: 1rem; }
+    .room-filter { width: 100%; }
+    .room-filter button { flex: 1; padding: 0.7rem 0.4rem; letter-spacing: 0.12em; }
+    .bay .frame img { max-height: 52vh; }
+    .bay.sketch .frame img { max-height: 46vh; }
+    .frame.oak .mat { padding: 18px; }
+    .frame.noir .mat { padding: 22px; }
+    .frame.gilt { padding: 14px; }
+    .plaque { padding: 1.3rem 1.25rem; }
     .preview-ribbon { white-space: normal; text-align: center; font-size: 0.58rem; letter-spacing: 0.12em; line-height: 1.5; width: calc(100% - 2rem); }
     .viewer-nav { top: calc(1.5rem + env(safe-area-inset-top, 0px)); bottom: auto; margin-top: 0; }
     .viewer-nav.prev { left: 1.25rem; right: auto; }
     .viewer-nav.next { left: calc(1.25rem + 62px); right: auto; }
     .viewer-close { right: 1.25rem; }
-    .frame.oak .mat { padding: 18px; }
-    .frame.noir .mat { padding: 22px; }
-    .frame.gilt { padding: 14px; }
-    .plaque { width: min(300px, 80vw); padding: 0.9rem 1rem; }
-    .plaque h3 { font-size: 1.3rem; }
-    .plaque-meta { display: none; }
-    .exhibit .art-hang::after { display: none; }
-    .floor { height: 8vh; }
     .entrance-facts { gap: 1.5rem; }
     .entrance-facts dd { font-size: 1.2rem; }
 }

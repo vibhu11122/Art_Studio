@@ -1,7 +1,7 @@
 /**
  * Vishal Trivedi Studio — public gallery
  * Loads the collection (Google Sheet → artworks.json fallback), hangs it in a
- * scroll-driven corridor, builds the catalogue, and runs the viewing room.
+ * vertical, spotlit collection, builds the catalogue, and runs the viewing room.
  */
 (function () {
     'use strict';
@@ -217,34 +217,32 @@
     }
 
     /* ------------------------------------------------------------------
-       The corridor: hang exhibits, then map vertical scroll → sideways walk
+       The collection: one spotlit bay per work, alternating sides
        ------------------------------------------------------------------ */
-    const corridor = $('#corridor');
-    const track = $('#track');
-    let walkDistance = 0;
+    const hall = $('#hall');
+    let bayObserver = null;
 
-    function renderCorridor() {
-        $$('.exhibit.work', track).forEach(n => n.remove());
-        const outro = $('.outro-panel', track);
+    function renderCollection() {
+        hall.textContent = '';
 
         shown.forEach((art, i) => {
-            const ex = el('article', `exhibit work${isSketch(art) ? ' sketch' : ''}${isSold(art) ? ' is-sold' : ''}`);
+            const bay = el('article', `bay${isSketch(art) ? ' sketch' : ''}${isSold(art) ? ' is-sold' : ''}${i % 2 ? ' flip' : ''}`);
 
             const hang = el('div', 'art-hang');
             hang.dataset.cursor = 'view';
             hang.setAttribute('role', 'button');
             hang.tabIndex = 0;
             hang.setAttribute('aria-label', `View ${art.title}`);
-            const frame = makeFrame(art, i);
-            hang.appendChild(frame);
+            hang.appendChild(el('div', 'spot-cone'));
+            hang.appendChild(makeFrame(art, i));
             hang.addEventListener('click', () => openViewer(i, shown));
             hang.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openViewer(i, shown); } });
-            frame.querySelector('img').addEventListener('load', layoutCorridor);
 
             const plaque = el('div', 'plaque');
             plaque.appendChild(el('span', 'plaque-no', `No. ${pad2(i + 1)} · ${art.category}`));
             plaque.appendChild(el('h3', null, art.title));
             plaque.appendChild(el('p', 'plaque-artist', CFG.artistName));
+            if (art.description) plaque.appendChild(el('p', 'plaque-desc', art.description));
             const meta = el('p', 'plaque-meta');
             meta.append(art.medium, el('br'), art.dimensions);
             plaque.appendChild(meta);
@@ -253,7 +251,7 @@
             foot.appendChild(el('span', `status-dot${isSold(art) ? ' sold' : ''}`, isSold(art) ? 'Collected' : 'Available'));
             plaque.appendChild(foot);
             const actions = el('div', 'plaque-actions');
-            const view = el('button', null, 'View');
+            const view = el('button', null, 'View closer');
             view.type = 'button';
             view.addEventListener('click', () => openViewer(i, shown));
             const acq = el('a', `acq${isSold(art) ? ' disabled' : ''}`, isSold(art) ? 'Sold' : 'Acquire');
@@ -263,41 +261,23 @@
             actions.append(view, acq);
             plaque.appendChild(actions);
 
-            ex.append(hang, plaque);
-            track.insertBefore(ex, outro);
+            bay.append(hang, plaque);
+            hall.appendChild(bay);
         });
 
-        $('#corridorTotal').textContent = pad2(shown.length);
-        layoutCorridor();
-    }
+        if (!shown.length) hall.appendChild(el('p', 'hall-empty', 'New works are being framed — check back soon.'));
 
-    function layoutCorridor() {
-        walkDistance = Math.max(0, track.scrollWidth - window.innerWidth);
-        corridor.style.height = `${walkDistance + window.innerHeight}px`;
-        walk();
-    }
-
-    let ticking = false;
-    function walk() {
-        ticking = false;
-        const start = corridor.offsetTop;
-        const p = walkDistance ? Math.min(1, Math.max(0, (window.scrollY - start) / walkDistance)) : 0;
-        track.style.transform = `translate3d(${-p * walkDistance}px, 0, 0)`;
-        $('#corridorBar').style.transform = `scaleX(${p})`;
-
-        // which work is closest to the centre of the screen
-        const works = $$('.exhibit.work', track);
-        let best = 0, bestD = Infinity;
-        works.forEach((w, i) => {
-            const r = w.getBoundingClientRect();
-            const d = Math.abs(r.left + r.width / 2 - window.innerWidth / 2);
-            if (d < bestD) { bestD = d; best = i; }
-        });
-        $('#corridorIndex').textContent = pad2(works.length ? best + 1 : 0);
+        // fade each bay in as it reaches the viewer
+        if (bayObserver) bayObserver.disconnect();
+        const bays = $$('.bay', hall);
+        if (!('IntersectionObserver' in window) || reduceMotion) { bays.forEach(b => b.classList.add('in')); return; }
+        bayObserver = new IntersectionObserver(entries => entries.forEach(e => {
+            if (e.isIntersecting) { e.target.classList.add('in'); bayObserver.unobserve(e.target); }
+        }), { threshold: 0.2 });
+        bays.forEach(b => bayObserver.observe(b));
     }
 
     function onScroll() {
-        if (!ticking) { ticking = true; requestAnimationFrame(walk); }
         $('#siteHeader').classList.toggle('scrolled', window.scrollY > 40);
     }
 
@@ -309,9 +289,10 @@
             });
             const f = btn.dataset.filter;
             shown = f === 'all' ? collection.slice() : collection.filter(a => a.category.toLowerCase() === f.toLowerCase());
-            renderCorridor();
-            // return to the start of the corridor so the new room is seen from the beginning
-            if (window.scrollY > corridor.offsetTop) window.scrollTo({ top: corridor.offsetTop, behavior: reduceMotion ? 'auto' : 'smooth' });
+            renderCollection();
+            // bring the top of the collection back into view so the filtered works are seen from the start
+            const top = $('#corridor').getBoundingClientRect().top + window.scrollY;
+            if (window.scrollY > top) window.scrollTo({ top, behavior: reduceMotion ? 'auto' : 'smooth' });
         }));
     }
 
@@ -501,8 +482,6 @@
         setupReveal();
         setupNavSpy();
         window.addEventListener('scroll', onScroll, { passive: true });
-        window.addEventListener('resize', layoutCorridor);
-        if ('ResizeObserver' in window) new ResizeObserver(layoutCorridor).observe(track);
 
         // never keep visitors behind the curtain for long, even on a slow sheet
         const started = Date.now();
@@ -513,7 +492,7 @@
         $('#previewRibbon').hidden = !usingSamples;
 
         renderEntrance();
-        renderCorridor();
+        renderCollection();
         renderCatalogue();
         onScroll();
 
