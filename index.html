@@ -38,7 +38,7 @@
             <span class="brand-sub">Studio</span>
         </a>
         <nav class="site-nav" aria-label="Primary">
-            <a href="#corridor">The Corridor</a>
+            <a href="#corridor">The Collection</a>
             <a href="#catalogue">Catalogue</a>
             <a href="#artist">The Artist</a>
             <a href="#acquire">Acquire</a>
@@ -78,49 +78,36 @@
             </figure>
 
             <a href="#corridor" class="scroll-cue" aria-label="Scroll to the gallery">
-                <span>Scroll to walk through</span>
+                <span>Scroll to enter</span>
                 <span class="scroll-cue-line"></span>
             </a>
         </section>
 
-        <!-- The Grand Corridor: vertical scroll walks you sideways past the wall -->
-        <section class="corridor" id="corridor" aria-label="The Grand Corridor">
-            <div class="corridor-sticky">
-                <div class="corridor-hud">
-                    <div class="room-title">
-                        <span class="room-num">Room I</span>
-                        <span class="room-name">The Grand Corridor</span>
-                    </div>
-                    <div class="room-filter" role="tablist" aria-label="Filter works">
-                        <button class="active" data-filter="all" role="tab" aria-selected="true">All works</button>
-                        <button data-filter="Paintings" role="tab" aria-selected="false">Paintings</button>
-                        <button data-filter="Sketches" role="tab" aria-selected="false">Sketches</button>
-                    </div>
-                    <div class="room-counter"><span id="corridorIndex">01</span> / <span id="corridorTotal">—</span></div>
+        <!-- The Collection: a simple vertical walk, one spotlit bay per work -->
+        <section class="collection" id="corridor" aria-label="The Collection">
+            <div class="collection-head">
+                <div class="section-head reveal">
+                    <p class="eyebrow"><span class="eyebrow-line"></span>Room I</p>
+                    <h2>The <em>Collection.</em></h2>
                 </div>
-
-                <div class="wall">
-                    <div class="track" id="track">
-                        <div class="exhibit intro-panel">
-                            <p class="eyebrow"><span class="eyebrow-line"></span>Room I</p>
-                            <h2>Walk the<br><em>corridor.</em></h2>
-                            <p>Keep scrolling to move along the wall. Select any work to step into its viewing room.</p>
-                            <span class="intro-arrow" aria-hidden="true">→</span>
-                        </div>
-                        <!-- Exhibits are hung here by app.js -->
-                        <div class="exhibit outro-panel">
-                            <p class="eyebrow"><span class="eyebrow-line"></span>End of Room I</p>
-                            <h2>Something<br><em>caught your eye?</em></h2>
-                            <div class="outro-actions">
-                                <a href="#catalogue" class="btn-line">See the full catalogue</a>
-                                <a href="#" class="btn-gold" data-whatsapp="general">Ask about a piece</a>
-                            </div>
-                        </div>
-                    </div>
+                <div class="room-filter reveal" role="tablist" aria-label="Filter works">
+                    <button class="active" data-filter="all" role="tab" aria-selected="true">All works</button>
+                    <button data-filter="Paintings" role="tab" aria-selected="false">Paintings</button>
+                    <button data-filter="Sketches" role="tab" aria-selected="false">Sketches</button>
                 </div>
+            </div>
 
-                <div class="floor" aria-hidden="true"></div>
-                <div class="corridor-progress" aria-hidden="true"><span id="corridorBar"></span></div>
+            <div class="hall" id="hall">
+                <!-- Exhibits are hung here by app.js -->
+            </div>
+
+            <div class="hall-end reveal">
+                <p class="eyebrow"><span class="eyebrow-line"></span>End of Room I<span class="eyebrow-line"></span></p>
+                <h3>Something <em>caught your eye?</em></h3>
+                <div class="hall-end-actions">
+                    <a href="#catalogue" class="btn-line">See the full catalogue</a>
+                    <a href="#" class="btn-gold" data-whatsapp="general">Ask about a piece</a>
+                </div>
             </div>
         </section>
 
@@ -169,7 +156,7 @@
                 <p class="section-sub">Every purchase is handled personally over WhatsApp — no checkout forms, just a conversation.</p>
             </div>
             <ol class="steps">
-                <li class="step reveal"><span class="step-num">I</span><h3>Choose</h3><p>Walk the corridor or browse the catalogue, then open a work to see its size, medium and price.</p></li>
+                <li class="step reveal"><span class="step-num">I</span><h3>Choose</h3><p>Browse the collection or the catalogue, then open a work to see its size, medium and price.</p></li>
                 <li class="step reveal"><span class="step-num">II</span><h3>Enquire</h3><p>Tap <em>Acquire via WhatsApp</em> — a message with the work's details is written for you.</p></li>
                 <li class="step reveal"><span class="step-num">III</span><h3>Receive</h3><p>We confirm payment and delivery, and your piece is packed with care and sent to you.</p></li>
             </ol>

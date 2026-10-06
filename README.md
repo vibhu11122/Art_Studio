@@ -1,6 +1,6 @@
 # Vishal Trivedi Studio — Online Gallery & Shop
 
-A museum-style gallery for showcasing and selling original sketches and paintings. Visitors pass through an opening curtain, walk a **scroll-driven corridor** where each work hangs in its own frame under a spotlight with a gallery plaque, browse a **catalogue**, and step into a **viewing room** with a magnifying loupe. Purchases happen over **WhatsApp**, and the collection is managed from a **Google Sheet** (plus the optional admin console).
+A museum-style gallery for showcasing and selling original sketches and paintings. Visitors pass through an opening curtain, scroll through **the collection**, where each work hangs in its own spotlit bay with a gallery plaque beside it, browse a **catalogue**, and step into a **viewing room** with a magnifying loupe. Purchases happen over **WhatsApp**, and the collection is managed from a **Google Sheet** (plus the optional admin console).
 
 ## File Structure
 - `index.html` — the public gallery (entrance, corridor, catalogue, artist, acquire, viewing room).
